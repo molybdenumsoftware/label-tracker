@@ -1,0 +1,28 @@
+query PullsQuery($owner: String!, $name: String!, $label: String!, $after: String, $batch: Int!) {
+  rateLimit {
+    limit
+    cost
+    remaining
+    resetAt
+  }
+  repository(owner: $owner, name: $name) {
+    pullRequests(first: $batch, after: $after, labels: [ $label ], orderBy: { direction: DESC, field: UPDATED_AT }) {
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      edges {
+        node {
+          id
+          bodyHTML
+          closed
+          merged
+          baseRefName
+          title
+          updatedAt
+          url
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+query IssuesQuery($owner: String!, $name: String!, $label: String!, $after: String, $since: DateTime, $batch: Int!) {
+  rateLimit {
+    limit
+    cost
+    remaining
+    resetAt
+  }
+  repository(owner: $owner, name: $name) {
+    issues(first: $batch, after: $after, filterBy: { labels: [ $label ], since: $since }) {
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      edges {
+        node {
+          id
+          bodyHTML
+          closed
+          title
+          updatedAt
+          url
+        }
+      }
+    }
+  }
+}
