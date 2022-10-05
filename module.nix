@@ -51,6 +51,18 @@ in {
               type = types.str;
               description = "Name of the label.";
             };
+
+            channels = mkOption {
+              type = types.attrsOf (types.listOf types.str);
+              description = ''
+                Branches to check for PR landing events (ie. changes of a
+                PR showing up in a given branch). Useful for channels.
+
+                Branch names my regular expressions. Targets can refer to
+                captures in the base ref regex with $1, $2 etc.
+              '';
+              default = {};
+            };
           };
         });
         default = [];
@@ -78,7 +90,7 @@ in {
     systemd.services.label-tracker = {
       startAt = cfg.startAt;
 
-      path = [ self.packages.${config.nixpkgs.system}.label-tracker ];
+      path = [ pkgs.git self.packages.${config.nixpkgs.system}.label-tracker ];
       environment.RUST_LOG = "info";
       script = ''
         set -euo pipefail
@@ -92,6 +104,11 @@ in {
                 owner = escapeShellArg args.owner;
                 repo = escapeShellArg args.repo;
                 label = escapeShellArg args.label;
+                patterns = escapeShellArg
+                  (concatStringsSep ","
+                    (mapAttrsToList
+                      (base: targets: "${base}:${concatStringsSep " " targets}")
+                      args.channels));
               in ''
                 (
                   umask 0077
@@ -100,7 +117,9 @@ in {
                     label-tracker init states/${name} ${owner} ${repo} ${label}
                   fi
                   label-tracker sync-issues states/${name}
-                  label-tracker sync-prs states/${name}
+                  label-tracker sync-prs states/${name} \
+                    -l states/${name}.git \
+                    -p ${patterns}
                 )
                 (
                   umask 0027

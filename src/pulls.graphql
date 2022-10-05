@@ -21,6 +21,9 @@ query PullsQuery($owner: String!, $name: String!, $label: String!, $after: Strin
           title
           updatedAt
           url
+          mergeCommit {
+            oid
+          }
         }
       }
     }

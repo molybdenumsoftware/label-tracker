@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 
@@ -59,9 +59,23 @@ pub struct PullRequest {
     pub last_update: DateTime,
     pub url: String,
     pub base_ref: String,
+    pub merge_commit: Option<String>,
+
+    // non-github fields
+    #[serde(default)]
+    pub landed_in: BTreeSet<String>,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+impl PullRequest {
+    pub fn update(&mut self, from: PullRequest) {
+        *self = PullRequest {
+            landed_in: std::mem::replace(&mut self.landed_in, BTreeSet::new()),
+            ..from
+        }
+    }
+}
+
+#[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub enum PullAction {
     New,
@@ -69,4 +83,5 @@ pub enum PullAction {
     NewClosed,
     Merged,
     NewMerged,
+    Landed(Vec<String>)
 }

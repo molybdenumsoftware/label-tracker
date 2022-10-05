@@ -9,6 +9,7 @@ use crate::types::{DateTime, Issue, PullRequest, HTML, URI};
 const API_URL: &str = "https://api.github.com/graphql";
 
 type Cursor = String;
+type GitObjectID = String;
 
 pub struct Github {
     client: reqwest::blocking::Client,
@@ -119,6 +120,8 @@ impl ChunkedQuery for PullsQuery {
                 last_update: n.updated_at,
                 url: n.url,
                 base_ref: n.base_ref_name,
+                merge_commit: n.merge_commit.map(|c| c.oid),
+                landed_in: Default::default(),
             })
             .collect();
         let cursor = match (self.since, infos.last()) {

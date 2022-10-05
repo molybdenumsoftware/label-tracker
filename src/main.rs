@@ -7,21 +7,60 @@ mod github;
 mod types;
 
 use std::{
-    collections::{btree_map::Entry, BTreeMap},
+    collections::{btree_map::Entry, BTreeMap, BTreeSet},
     env,
     fs::File,
     io::{BufReader, BufWriter},
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, process, str::FromStr,
 };
 
 use anyhow::{Context, Result};
 use chrono::{Duration, Utc};
 use clap::{Args, Parser, Subcommand};
 use github::Github;
+use regex::Regex;
 use rss::{Channel, ChannelBuilder, Guid, Item, ItemBuilder};
 use serde_json::{from_reader, to_writer};
 use tempfile::NamedTempFile;
 use types::{DateTime, IssueAction, PullAction, State, STATE_VERSION};
+
+#[derive(Debug)]
+struct ChannelPatterns {
+    patterns: Vec<(Regex, Vec<String>)>,
+}
+
+impl ChannelPatterns {
+    fn find_channels(&self, base: &str) -> BTreeSet<String> {
+        self.patterns
+            .iter()
+            .flat_map(|(b, c)| match b.find_at(base, 0) {
+                Some(m) if m.end() == base.len() => Some((b, c)),
+                _ => None
+            })
+            .flat_map(|(b, c)| c.iter().map(|chan| b.replace(base, chan).to_string()))
+            .collect()
+    }
+}
+
+impl FromStr for ChannelPatterns {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let patterns = s
+            .split(",")
+            .map(|s| {
+                match s.trim().split_once(":") {
+                    Some((base, channels)) => Ok((
+                        Regex::new(base)?,
+                        channels.split_whitespace().map(|s| s.to_owned()).collect::<Vec<_>>()
+                    )),
+                    None => bail!("invalid channel pattern `{s}`"),
+                }
+            })
+            .collect::<Result<_>>()?;
+        Ok(ChannelPatterns { patterns })
+    }
+}
 
 #[derive(Parser)]
 #[clap(version)]
@@ -48,9 +87,9 @@ enum Command {
         label: String,
     },
     /// Sync issues on a state.
-    SyncIssues(SyncArgs),
+    SyncIssues(SyncIssuesArgs),
     /// Sync pull requests on a state.
-    SyncPrs(SyncArgs),
+    SyncPrs(SyncPrsArgs),
     /// Emit an RSS feed for issue changes.
     EmitIssues(EmitArgs),
     /// Emit an RSS feed for PR changes.
@@ -58,9 +97,23 @@ enum Command {
 }
 
 #[derive(Args)]
-struct SyncArgs {
+struct SyncIssuesArgs {
     /// State to sync.
     state_file: PathBuf,
+}
+
+#[derive(Args)]
+struct SyncPrsArgs {
+    /// State to sync.
+    state_file: PathBuf,
+
+    /// Path to git repo used for landing detection.
+    #[clap(short = 'l', long)]
+    local_repo: PathBuf,
+
+    /// PR landing patterns.
+    #[clap(short = 'p', long)]
+    patterns: ChannelPatterns,
 }
 
 #[derive(Args)]
@@ -77,11 +130,12 @@ struct EmitArgs {
     out: Option<PathBuf>,
 }
 
-fn with_state<F>(state_file: PathBuf, f: F) -> Result<()>
+fn with_state<F>(state_file: impl AsRef<Path>, f: F) -> Result<()>
 where
     F: FnOnce(State) -> Result<Option<State>>,
 {
-    let old_state: State = from_reader(BufReader::new(File::open(&state_file)?))?;
+    let state_file = state_file.as_ref();
+    let old_state: State = from_reader(BufReader::new(File::open(state_file)?))?;
     if old_state.version != STATE_VERSION {
         bail!(
             "expected state version {}, got {}",
@@ -107,7 +161,7 @@ where
     Ok(())
 }
 
-fn with_state_and_github<F>(state_file: PathBuf, f: F) -> Result<()>
+fn with_state_and_github<F>(state_file: impl AsRef<Path>, f: F) -> Result<()>
 where
     F: FnOnce(State, &Github) -> Result<Option<State>>,
 {
@@ -126,7 +180,10 @@ where
     })
 }
 
-fn sync_issues(mut state: State, github: &github::Github) -> Result<Option<State>> {
+fn sync_issues(
+    mut state: State,
+    github: &github::Github,
+) -> Result<Option<State>> {
     let issues = github.query_issues(state.issues_updated)?;
 
     let mut new_history = vec![];
@@ -161,7 +218,13 @@ fn sync_issues(mut state: State, github: &github::Github) -> Result<Option<State
     Ok(Some(state))
 }
 
-fn sync_prs(mut state: State, github: &github::Github) -> Result<Option<State>> {
+fn sync_prs(
+    mut state: State,
+    github: &github::Github,
+    local_repo: impl AsRef<Path>,
+    channel_patterns: &ChannelPatterns,
+) -> Result<Option<State>> {
+    let local_repo = local_repo.as_ref();
     let prs = github.query_pulls(state.pull_requests_updated)?;
 
     let mut new_history = vec![];
@@ -180,7 +243,7 @@ fn sync_prs(mut state: State, github: &github::Github) -> Result<Option<State>> 
                 if (stored.is_open, stored.is_merged) != (updated.is_open, updated.is_merged) {
                     new_history.push((updated.last_update, updated.id.clone(), pr_state(false)));
                 }
-                *stored = updated;
+                stored.update(updated);
             }
             Entry::Vacant(e) => {
                 new_history.push((updated.last_update, updated.id.clone(), pr_state(true)));
@@ -189,7 +252,67 @@ fn sync_prs(mut state: State, github: &github::Github) -> Result<Option<State>> 
         }
     }
 
-    new_history.sort_by(|a, b| (a.0, &a.1).cmp(&(b.0, &b.1)));
+    let mut git_cmd = process::Command::new("git");
+    let kind = if !local_repo.exists() {
+        let url = format!("https://github.com/{}/{}", &state.owner, &state.repo);
+        git_cmd.arg("clone").args([&url, "--filter", "tree:0", "--bare"]).arg(local_repo);
+        "clone"
+    } else {
+        git_cmd.arg("-C")
+               .arg(local_repo)
+               .args(["fetch", "--force", "--prune", "origin", "refs/heads/*:refs/heads/*"]);
+        "fetch"
+    };
+
+    let git_status = git_cmd.spawn()?.wait()?;
+    if !git_status.success() {
+        bail!("{kind} failed: {git_status}");
+    }
+
+    let branches = state.pull_requests
+                        .values()
+                        .map(|pr| pr.base_ref.clone())
+                        .collect::<BTreeSet<_>>();
+    let patterns = branches.iter()
+                           .map(|b| (b.as_str(), channel_patterns.find_channels(b)))
+                           .filter(|(_, cs)| !cs.is_empty())
+                           .collect::<BTreeMap<_, _>>();
+
+    for pr in state.pull_requests.values_mut() {
+        let merge = match pr.merge_commit.as_ref() {
+            Some(m) => m,
+            None => continue,
+        };
+        let chans = match patterns.get(pr.base_ref.as_str()) {
+            Some(chans) if chans != &pr.landed_in => chans,
+            _ => continue,
+        };
+        let landed = process::Command::new("git")
+            .arg("-C").arg(local_repo)
+            .args(["branch", "--contains", &merge, "--list"])
+            .args(chans)
+            .output()?;
+        let landed = if landed.status.success() {
+            std::str::from_utf8(&landed.stdout)?
+                .split_whitespace()
+                .filter(|&b| !pr.landed_in.contains(b))
+                .map(|s| s.to_owned())
+                .collect::<Vec<_>>()
+        } else {
+            bail!(
+                "failed to check landing status of {}: {}, {}",
+                pr.id,
+                landed.status,
+                String::from_utf8_lossy(&landed.stderr));
+        };
+        if landed.is_empty() {
+            continue;
+        }
+        pr.landed_in.extend(landed.iter().cloned());
+        new_history.push((Utc::now(), pr.id.clone(), PullAction::Landed(landed)));
+    }
+
+    new_history.sort_by(|a, b| (a.0, &a.1, &a.2).cmp(&(b.0, &b.1, &b.2)));
     if let Some(&(at, _, _)) = new_history.last() {
         state.pull_requests_updated = Some(at);
     }
@@ -198,11 +321,15 @@ fn sync_prs(mut state: State, github: &github::Github) -> Result<Option<State>> 
     Ok(Some(state))
 }
 
-fn format_history<V, A: Copy, F: Fn(&V, DateTime, A) -> Item>(
+fn format_history<V, A: Clone, F: Fn(&V, DateTime, &A) -> Item>(
     items: &BTreeMap<String, V>,
     history: &[(DateTime, String, A)],
     age_hours: u32,
     format_entry: F,
+    // backwards compat of GUIDs requires this. we need either a different ID format
+    // or an id suffix to give landing events unique ids in all cases, and the suffix
+    // is easier for now
+    id_suffix: impl Fn(&A) -> String,
 ) -> Result<Vec<Item>> {
     let since = Utc::now() - Duration::hours(age_hours as i64);
 
@@ -217,10 +344,10 @@ fn format_history<V, A: Copy, F: Fn(&V, DateTime, A) -> Item>(
             };
             Ok(Item {
                 guid: Some(Guid {
-                    value: format!("{}/{}", changed.to_rfc3339(), id),
+                    value: format!("{}/{}{}", changed.to_rfc3339(), id, id_suffix(how)),
                     permalink: false,
                 }),
-                ..format_entry(entry, *changed, *how)
+                ..format_entry(entry, *changed, how)
             })
         })
         .collect::<Result<Vec<_>, _>>()
@@ -248,6 +375,7 @@ fn emit_issues(state: &State, age_hours: u32) -> Result<Channel> {
             };
             new_rss_item(tag, &issue.title, &issue.url, changed, &issue.body)
         },
+        |_| String::default(),
     )?;
 
     let channel = ChannelBuilder::default()
@@ -267,15 +395,20 @@ fn emit_prs(state: &State, age_hours: u32) -> Result<Channel> {
         &state.pull_history,
         age_hours,
         |pr, changed, how| {
-            let tag = match how {
-                PullAction::New => "[NEW]",
-                PullAction::NewMerged => "[NEW][MERGED]",
-                PullAction::Closed => "[CLOSED]",
-                PullAction::NewClosed => "[NEW][CLOSED]",
-                PullAction::Merged => "[MERGED]",
+            let (tag, refs) = match how {
+                PullAction::New => ("[NEW]", None),
+                PullAction::NewMerged => ("[NEW][MERGED]", None),
+                PullAction::Closed => ("[CLOSED]", None),
+                PullAction::NewClosed => ("[NEW][CLOSED]", None),
+                PullAction::Merged => ("[MERGED]", None),
+                PullAction::Landed(l) => ("[LANDED]", Some(l.join(" "))),
             };
-            let info = format!("{}({})", tag, pr.base_ref);
+            let info = format!("{}({})", tag, refs.as_ref().unwrap_or_else(|| &pr.base_ref));
             new_rss_item(&info, &pr.title, &pr.url, changed, &pr.body)
+        },
+        |how| match how {
+            PullAction::Landed(chans) => format!("/landed/{}", chans.join("/")),
+            _ => String::default(),
         },
     )?;
 
@@ -329,10 +462,15 @@ fn main() -> Result<()> {
             to_writer(file, &state)?;
         }
         Command::SyncIssues(cmd) => {
-            with_state_and_github(cmd.state_file, sync_issues)?;
+            with_state_and_github(&cmd.state_file, sync_issues)?;
         }
         Command::SyncPrs(cmd) => {
-            with_state_and_github(cmd.state_file, sync_prs)?;
+            with_state_and_github(
+                &cmd.state_file,
+                |s, g| {
+                    sync_prs(s, g, cmd.local_repo, &cmd.patterns)
+                },
+            )?;
         }
         Command::EmitIssues(cmd) => {
             with_state(cmd.state_file, |s| {
