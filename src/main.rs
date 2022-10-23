@@ -278,7 +278,7 @@ fn sync_prs(
                            .filter(|(_, cs)| !cs.is_empty())
                            .collect::<BTreeMap<_, _>>();
 
-    for pr in state.pull_requests.values_mut() {
+    for (id, pr) in state.pull_requests.iter_mut() {
         let merge = match pr.merge_commit.as_ref() {
             Some(m) => m,
             None => continue,
@@ -301,7 +301,7 @@ fn sync_prs(
         } else {
             bail!(
                 "failed to check landing status of {}: {}, {}",
-                pr.id,
+                id,
                 landed.status,
                 String::from_utf8_lossy(&landed.stderr));
         };
@@ -309,7 +309,7 @@ fn sync_prs(
             continue;
         }
         pr.landed_in.extend(landed.iter().cloned());
-        new_history.push((Utc::now(), pr.id.clone(), PullAction::Landed(landed)));
+        new_history.push((Utc::now(), id.clone(), PullAction::Landed(landed)));
     }
 
     new_history.sort_by(|a, b| (a.0, &a.1, &a.2).cmp(&(b.0, &b.1, &b.2)));
