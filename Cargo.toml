@@ -1,13 +1,13 @@
 [package]
 name = "label-tracker"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow = "1.0"
-chrono = { version = "0.4.19", features = [ "serde" ] }
+chrono = { version = "0.4.19", default-features = false, features = [ "clock", "serde" ] }
 clap = { version = "3.1.18", features = [ "derive" ] }
 graphql_client = { version = "0.10", features = [ "reqwest-blocking" ] }
 log = "0.4"
