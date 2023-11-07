@@ -23,6 +23,8 @@
           inputsFrom = [ packages.default ];
           packages = with pkgs; [ rustfmt rust-analyzer clippy ];
         };
+
+        checks.build = packages.label-tracker;
       }) // {
         nixosModule = import ./module.nix { inherit self; };
       };
