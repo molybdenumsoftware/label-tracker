@@ -1,9 +1,10 @@
-{ self }:
-
-{ config, pkgs, lib, ... }:
-
-with lib;
-let
+{self}: {
+  config,
+  pkgs,
+  lib,
+  ...
+}:
+with lib; let
   cfg = config.services.label-tracker;
 in {
   options = {
@@ -90,7 +91,7 @@ in {
     systemd.services.label-tracker = {
       startAt = cfg.startAt;
 
-      path = [ pkgs.git self.packages.${config.nixpkgs.system}.label-tracker ];
+      path = [pkgs.git self.packages.${config.nixpkgs.system}.label-tracker];
       environment.RUST_LOG = "info";
       script = ''
         set -euo pipefail
@@ -98,43 +99,43 @@ in {
 
         ${concatStringsSep "\n"
           (mapAttrsToList
-            (key: args:
-              let
-                name = escapeShellArg key;
-                owner = escapeShellArg args.owner;
-                repo = escapeShellArg args.repo;
-                label = escapeShellArg args.label;
-                patterns = escapeShellArg
-                  (concatStringsSep ","
-                    (mapAttrsToList
-                      (base: targets: "${base}:${concatStringsSep " " targets}")
-                      args.channels));
-              in ''
-                (
-                  umask 0077
-                  if ! [ -e states/${name} ]; then
-                    mkdir -p states
-                    label-tracker init states/${name} ${owner} ${repo} ${label}
-                  fi
-                  label-tracker sync-issues states/${name}
-                  label-tracker sync-prs states/${name} \
-                    -l states/${name}.git \
-                    -p ${patterns}
-                )
-                (
-                  umask 0027
-                  mkdir -p results/${name}
-                  umask 0037
-                  label-tracker emit-issues states/${name} \
-                    -a ${toString cfg.feedAgeLimit} \
-                    > results/${name}/.issues.xml.tmp
-                  mv results/${name}/.issues.xml.tmp results/${name}/issues.xml
-                  label-tracker emit-prs states/${name} \
-                    -a ${toString cfg.feedAgeLimit} \
-                    > results/${name}/.prs.xml.tmp
-                  mv results/${name}/.prs.xml.tmp results/${name}/prs.xml
-                )
-              '')
+            (key: args: let
+              name = escapeShellArg key;
+              owner = escapeShellArg args.owner;
+              repo = escapeShellArg args.repo;
+              label = escapeShellArg args.label;
+              patterns =
+                escapeShellArg
+                (concatStringsSep ","
+                  (mapAttrsToList
+                    (base: targets: "${base}:${concatStringsSep " " targets}")
+                    args.channels));
+            in ''
+              (
+                umask 0077
+                if ! [ -e states/${name} ]; then
+                  mkdir -p states
+                  label-tracker init states/${name} ${owner} ${repo} ${label}
+                fi
+                label-tracker sync-issues states/${name}
+                label-tracker sync-prs states/${name} \
+                  -l states/${name}.git \
+                  -p ${patterns}
+              )
+              (
+                umask 0027
+                mkdir -p results/${name}
+                umask 0037
+                label-tracker emit-issues states/${name} \
+                  -a ${toString cfg.feedAgeLimit} \
+                  > results/${name}/.issues.xml.tmp
+                mv results/${name}/.issues.xml.tmp results/${name}/issues.xml
+                label-tracker emit-prs states/${name} \
+                  -a ${toString cfg.feedAgeLimit} \
+                  > results/${name}/.prs.xml.tmp
+                mv results/${name}/.prs.xml.tmp results/${name}/prs.xml
+              )
+            '')
             cfg.track)}
       '';
 
@@ -145,8 +146,8 @@ in {
         Group = cfg.group;
         StateDirectory = "label-tracker";
         WorkingDirectory = "/var/lib/label-tracker";
-        AmbientCapabilities = [ "" ];
-        CapabilityBoundingSet = [ "" ];
+        AmbientCapabilities = [""];
+        CapabilityBoundingSet = [""];
         LockPersonality = true;
         MemoryDenyWriteExecute = true;
         NoNewPrivileges = true;

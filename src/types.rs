@@ -83,5 +83,5 @@ pub enum PullAction {
     NewClosed,
     Merged,
     NewMerged,
-    Landed(Vec<String>)
+    Landed(Vec<String>),
 }

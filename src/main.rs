@@ -11,7 +11,9 @@ use std::{
     env,
     fs::File,
     io::{BufReader, BufWriter},
-    path::{Path, PathBuf}, process, str::FromStr,
+    path::{Path, PathBuf},
+    process,
+    str::FromStr,
 };
 
 use anyhow::{Context, Result};
@@ -35,7 +37,7 @@ impl ChannelPatterns {
             .iter()
             .flat_map(|(b, c)| match b.find_at(base, 0) {
                 Some(m) if m.end() == base.len() => Some((b, c)),
-                _ => None
+                _ => None,
             })
             .flat_map(|(b, c)| c.iter().map(|chan| b.replace(base, chan).to_string()))
             .collect()
@@ -48,14 +50,15 @@ impl FromStr for ChannelPatterns {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let patterns = s
             .split(",")
-            .map(|s| {
-                match s.trim().split_once(":") {
-                    Some((base, channels)) => Ok((
-                        Regex::new(base)?,
-                        channels.split_whitespace().map(|s| s.to_owned()).collect::<Vec<_>>()
-                    )),
-                    None => bail!("invalid channel pattern `{s}`"),
-                }
+            .map(|s| match s.trim().split_once(":") {
+                Some((base, channels)) => Ok((
+                    Regex::new(base)?,
+                    channels
+                        .split_whitespace()
+                        .map(|s| s.to_owned())
+                        .collect::<Vec<_>>(),
+                )),
+                None => bail!("invalid channel pattern `{s}`"),
             })
             .collect::<Result<_>>()?;
         Ok(ChannelPatterns { patterns })
@@ -180,10 +183,7 @@ where
     })
 }
 
-fn sync_issues(
-    mut state: State,
-    github: &github::Github,
-) -> Result<Option<State>> {
+fn sync_issues(mut state: State, github: &github::Github) -> Result<Option<State>> {
     let issues = github.query_issues(state.issues_updated)?;
 
     let mut new_history = vec![];
@@ -255,12 +255,19 @@ fn sync_prs(
     let mut git_cmd = process::Command::new("git");
     let kind = if !local_repo.exists() {
         let url = format!("https://github.com/{}/{}", &state.owner, &state.repo);
-        git_cmd.arg("clone").args([&url, "--filter", "tree:0", "--bare"]).arg(local_repo);
+        git_cmd
+            .arg("clone")
+            .args([&url, "--filter", "tree:0", "--bare"])
+            .arg(local_repo);
         "clone"
     } else {
-        git_cmd.arg("-C")
-               .arg(local_repo)
-               .args(["fetch", "--force", "--prune", "origin", "refs/heads/*:refs/heads/*"]);
+        git_cmd.arg("-C").arg(local_repo).args([
+            "fetch",
+            "--force",
+            "--prune",
+            "origin",
+            "refs/heads/*:refs/heads/*",
+        ]);
         "fetch"
     };
 
@@ -269,14 +276,16 @@ fn sync_prs(
         bail!("{kind} failed: {git_status}");
     }
 
-    let branches = state.pull_requests
-                        .values()
-                        .map(|pr| pr.base_ref.clone())
-                        .collect::<BTreeSet<_>>();
-    let patterns = branches.iter()
-                           .map(|b| (b.as_str(), channel_patterns.find_channels(b)))
-                           .filter(|(_, cs)| !cs.is_empty())
-                           .collect::<BTreeMap<_, _>>();
+    let branches = state
+        .pull_requests
+        .values()
+        .map(|pr| pr.base_ref.clone())
+        .collect::<BTreeSet<_>>();
+    let patterns = branches
+        .iter()
+        .map(|b| (b.as_str(), channel_patterns.find_channels(b)))
+        .filter(|(_, cs)| !cs.is_empty())
+        .collect::<BTreeMap<_, _>>();
 
     for (id, pr) in state.pull_requests.iter_mut() {
         let merge = match pr.merge_commit.as_ref() {
@@ -288,7 +297,8 @@ fn sync_prs(
             _ => continue,
         };
         let landed = process::Command::new("git")
-            .arg("-C").arg(local_repo)
+            .arg("-C")
+            .arg(local_repo)
             .args(["branch", "--contains", &merge, "--list"])
             .args(chans)
             .output()?;
@@ -303,7 +313,8 @@ fn sync_prs(
                 "failed to check landing status of {}: {}, {}",
                 id,
                 landed.status,
-                String::from_utf8_lossy(&landed.stderr));
+                String::from_utf8_lossy(&landed.stderr)
+            );
         };
         if landed.is_empty() {
             continue;
@@ -465,12 +476,9 @@ fn main() -> Result<()> {
             with_state_and_github(&cmd.state_file, sync_issues)?;
         }
         Command::SyncPrs(cmd) => {
-            with_state_and_github(
-                &cmd.state_file,
-                |s, g| {
-                    sync_prs(s, g, cmd.local_repo, &cmd.patterns)
-                },
-            )?;
+            with_state_and_github(&cmd.state_file, |s, g| {
+                sync_prs(s, g, cmd.local_repo, &cmd.patterns)
+            })?;
         }
         Command::EmitIssues(cmd) => {
             with_state(cmd.state_file, |s| {
