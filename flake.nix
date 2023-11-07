@@ -1,9 +1,11 @@
 {
   inputs = {
     nixpkgs.url = github:NixOS/nixpkgs/nixos-unstable-small;
+    treefmt-nix.url = "github:numtide/treefmt-nix";
+    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, treefmt-nix }:
     let
       systems = { "x86_64-linux" = {}; };
       combine = fn: with builtins;
@@ -25,6 +27,10 @@
         };
 
         checks.build = packages.label-tracker;
+        checks.formatting =
+          let
+            treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+          in treefmtEval.config.build.check self;
       }) // {
         nixosModule = import ./module.nix { inherit self; };
       };
