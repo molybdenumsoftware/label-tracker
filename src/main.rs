@@ -344,7 +344,7 @@ fn format_history<V, A: Clone, F: Fn(&V, DateTime, &A) -> Item>(
     // or an id suffix to give landing events unique ids in all cases, and the suffix
     // is easier for now
     id_suffix: impl Fn(&A) -> String,
-) -> Result<Vec<Item>> {
+) -> Vec<Item> {
     let since = Utc::now() - Duration::hours(age_hours.into());
 
     history
@@ -353,17 +353,17 @@ fn format_history<V, A: Clone, F: Fn(&V, DateTime, &A) -> Item>(
         .take_while(|(changed, _, _)| changed >= &since)
         .map(|(changed, id, how)| {
             let Some(entry) = items.get(id.as_str()) else {
-                bail!("database is corrupted (dangling key {})", id)
+                panic!("database is corrupted (dangling key {id})")
             };
-            Ok(Item {
+            Item {
                 guid: Some(Guid {
                     value: format!("{}/{}{}", changed.to_rfc3339(), id, id_suffix(how)),
                     permalink: false,
                 }),
                 ..format_entry(entry, *changed, how)
-            })
+            }
         })
-        .collect::<Result<Vec<_>, _>>()
+        .collect::<Vec<_>>()
 }
 
 fn new_rss_item(tag: &str, title: &str, url: &str, changed: DateTime, body: &str) -> Item {
@@ -375,7 +375,7 @@ fn new_rss_item(tag: &str, title: &str, url: &str, changed: DateTime, body: &str
         .build()
 }
 
-fn emit_issues(state: &State, age_hours: u32) -> Result<Channel> {
+fn emit_issues(state: &State, age_hours: u32) -> Channel {
     let entries = format_history(
         &state.issues,
         &state.issue_history,
@@ -389,7 +389,7 @@ fn emit_issues(state: &State, age_hours: u32) -> Result<Channel> {
             new_rss_item(tag, &issue.title, &issue.url, changed, &issue.body)
         },
         |_| String::default(),
-    )?;
+    );
 
     let channel = ChannelBuilder::default()
         .title(format!(
@@ -399,10 +399,10 @@ fn emit_issues(state: &State, age_hours: u32) -> Result<Channel> {
         .items(entries)
         .build();
 
-    Ok(channel)
+    channel
 }
 
-fn emit_prs(state: &State, age_hours: u32) -> Result<Channel> {
+fn emit_prs(state: &State, age_hours: u32) -> Channel {
     let entries = format_history(
         &state.pull_requests,
         &state.pull_history,
@@ -423,7 +423,7 @@ fn emit_prs(state: &State, age_hours: u32) -> Result<Channel> {
             PullAction::Landed(chans) => format!("/landed/{}", chans.join("/")),
             _ => String::default(),
         },
-    )?;
+    );
 
     let channel = ChannelBuilder::default()
         .title(format!(
@@ -433,7 +433,7 @@ fn emit_prs(state: &State, age_hours: u32) -> Result<Channel> {
         .items(entries)
         .build();
 
-    Ok(channel)
+    channel
 }
 
 fn write_feed(to: Option<PathBuf>, channel: &Channel) -> Result<Option<State>> {
@@ -484,12 +484,12 @@ fn main() -> Result<()> {
         }
         Command::EmitIssues(cmd) => {
             with_state(cmd.state_file, |s| {
-                write_feed(cmd.out, &emit_issues(&s, cmd.age_hours)?)
+                write_feed(cmd.out, &emit_issues(&s, cmd.age_hours))
             })?;
         }
         Command::EmitPrs(cmd) => {
             with_state(cmd.state_file, |s| {
-                write_feed(cmd.out, &emit_prs(&s, cmd.age_hours)?)
+                write_feed(cmd.out, &emit_prs(&s, cmd.age_hours))
             })?;
         }
     };
