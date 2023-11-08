@@ -69,7 +69,7 @@ pub struct PullRequest {
 impl PullRequest {
     pub fn update(&mut self, from: PullRequest) {
         *self = PullRequest {
-            landed_in: std::mem::replace(&mut self.landed_in, BTreeSet::new()),
+            landed_in: std::mem::take(&mut self.landed_in),
             ..from
         }
     }

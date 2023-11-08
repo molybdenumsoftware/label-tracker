@@ -3,6 +3,7 @@
   pkg-config,
   openssl,
   lib,
+  clippy,
 }:
 rustPlatform.buildRustPackage {
   pname = "label-tracker";
@@ -10,10 +11,12 @@ rustPlatform.buildRustPackage {
 
   src = lib.cleanSource ./.;
 
-  nativeBuildInputs = [pkg-config];
+  nativeBuildInputs = [pkg-config clippy];
   buildInputs = [openssl];
 
   RUSTFLAGS = "--deny warnings";
 
   cargoLock.lockFile = ./Cargo.lock;
+
+  preBuild = "cargo clippy";
 }

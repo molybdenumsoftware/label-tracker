@@ -49,8 +49,8 @@ impl FromStr for ChannelPatterns {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let patterns = s
-            .split(",")
-            .map(|s| match s.trim().split_once(":") {
+            .split(',')
+            .map(|s| match s.trim().split_once(':') {
                 Some((base, channels)) => Ok((
                     Regex::new(base)?,
                     channels
@@ -299,7 +299,7 @@ fn sync_prs(
         let landed = process::Command::new("git")
             .arg("-C")
             .arg(local_repo)
-            .args(["branch", "--contains", &merge, "--list"])
+            .args(["branch", "--contains", merge, "--list"])
             .args(chans)
             .output()?;
         let landed = if landed.status.success() {
@@ -414,7 +414,7 @@ fn emit_prs(state: &State, age_hours: u32) -> Result<Channel> {
                 PullAction::Merged => ("[MERGED]", None),
                 PullAction::Landed(l) => ("[LANDED]", Some(l.join(" "))),
             };
-            let info = format!("{}({})", tag, refs.as_ref().unwrap_or_else(|| &pr.base_ref));
+            let info = format!("{}({})", tag, refs.as_ref().unwrap_or(&pr.base_ref));
             new_rss_item(&info, &pr.title, &pr.url, changed, &pr.body)
         },
         |how| match how {
@@ -473,7 +473,7 @@ fn main() -> Result<()> {
             to_writer(file, &state)?;
         }
         Command::SyncIssues(cmd) => {
-            with_state_and_github(&cmd.state_file, sync_issues)?;
+            with_state_and_github(cmd.state_file, sync_issues)?;
         }
         Command::SyncPrs(cmd) => {
             with_state_and_github(&cmd.state_file, |s, g| {
