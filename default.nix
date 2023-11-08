@@ -13,5 +13,7 @@ rustPlatform.buildRustPackage {
   nativeBuildInputs = [pkg-config];
   buildInputs = [openssl];
 
+  RUSTFLAGS = "--deny warnings";
+
   cargoLock.lockFile = ./Cargo.lock;
 }
