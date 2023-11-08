@@ -375,7 +375,7 @@ fn new_rss_item(tag: &str, title: &str, url: &str, changed: DateTime, body: &str
         .build()
 }
 
-fn emit_issues(state: &State, age_hours: u32) -> Channel {
+fn issues_feed(state: &State, age_hours: u32) -> Channel {
     let entries = format_history(
         &state.issues,
         &state.issue_history,
@@ -402,7 +402,7 @@ fn emit_issues(state: &State, age_hours: u32) -> Channel {
     channel
 }
 
-fn emit_prs(state: &State, age_hours: u32) -> Channel {
+fn prs_feed(state: &State, age_hours: u32) -> Channel {
     let entries = format_history(
         &state.pull_requests,
         &state.pull_history,
@@ -484,12 +484,12 @@ fn main() -> Result<()> {
         }
         Command::EmitIssues(cmd) => {
             with_state(cmd.state_file, |s| {
-                write_feed(cmd.out, &emit_issues(&s, cmd.age_hours))
+                write_feed(cmd.out, &issues_feed(&s, cmd.age_hours))
             })?;
         }
         Command::EmitPrs(cmd) => {
             with_state(cmd.state_file, |s| {
-                write_feed(cmd.out, &emit_prs(&s, cmd.age_hours))
+                write_feed(cmd.out, &prs_feed(&s, cmd.age_hours))
             })?;
         }
     };
