@@ -7,7 +7,7 @@ extern crate anyhow;
 extern crate log;
 
 mod github;
-mod types;
+mod state;
 
 use std::{
     borrow::ToOwned,
@@ -27,8 +27,8 @@ use github::Github;
 use regex::Regex;
 use rss::{Channel, ChannelBuilder, Guid, Item, ItemBuilder};
 use serde_json::{from_reader, to_writer};
+use state::{DateTime, IssueAction, PullAction, State, STATE_VERSION};
 use tempfile::NamedTempFile;
-use types::{DateTime, IssueAction, PullAction, State, STATE_VERSION};
 
 #[derive(Debug)]
 struct ChannelPatterns {

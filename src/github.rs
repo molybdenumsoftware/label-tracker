@@ -4,7 +4,7 @@ use anyhow::{bail, Result};
 use chrono::Duration;
 use graphql_client::{reqwest::post_graphql_blocking as post_graphql, GraphQLQuery};
 
-use crate::types::{DateTime, Issue, PullRequest, HTML, URI};
+use crate::state::{DateTime, Issue, PullRequest, HTML, URI};
 
 const API_URL: &str = "https://api.github.com/graphql";
 
