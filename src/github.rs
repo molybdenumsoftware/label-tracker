@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{collections::BTreeSet, fmt::Debug};
 
 use anyhow::{bail, Result};
 use chrono::Duration;
@@ -121,7 +121,7 @@ impl ChunkedQuery for PullsQuery {
                 url: n.url,
                 base_ref: n.base_ref_name,
                 merge_commit: n.merge_commit.map(|c| c.oid),
-                landed_in: Default::default(),
+                landed_in: BTreeSet::default(),
             })
             .collect();
         let cursor = match (self.since, infos.last()) {
@@ -142,7 +142,7 @@ impl Github {
     pub fn new(api_token: &str, owner: &str, repo: &str, label: &str) -> Result<Self> {
         use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 
-        let headers = match HeaderValue::from_str(&format!("Bearer {}", api_token)) {
+        let headers = match HeaderValue::from_str(&format!("Bearer {api_token}")) {
             Ok(h) => [(AUTHORIZATION, h)].into_iter().collect::<HeaderMap>(),
             Err(e) => bail!("invalid API token: {}", e),
         };
@@ -162,7 +162,7 @@ impl Github {
         })
     }
 
-    fn query_raw<Q>(&self, q: Q, mut vars: <Q as GraphQLQuery>::Variables) -> Result<Vec<Q::Item>>
+    fn query_raw<Q>(&self, q: &Q, mut vars: <Q as GraphQLQuery>::Variables) -> Result<Vec<Q::Item>>
     where
         Q: ChunkedQuery + Debug,
         Q::Variables: Clone + Debug,
@@ -219,7 +219,7 @@ impl Github {
 
     pub fn query_issues(&self, since: Option<DateTime>) -> Result<Vec<Issue>> {
         self.query_raw(
-            IssuesQuery,
+            &IssuesQuery,
             issues_query::Variables {
                 owner: self.owner.clone(),
                 name: self.repo.clone(),
@@ -233,7 +233,7 @@ impl Github {
 
     pub fn query_pulls(&self, since: Option<DateTime>) -> Result<Vec<PullRequest>> {
         self.query_raw(
-            PullsQuery { since },
+            &PullsQuery { since },
             pulls_query::Variables {
                 owner: self.owner.clone(),
                 name: self.repo.clone(),

@@ -1,7 +1,9 @@
 [package]
 name = "label-tracker"
+description = "track github issues and pull requests by their labels"
 version = "0.1.1"
 edition = "2021"
+repository = "https://git.eno.space/label-tracker.git"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -1,3 +1,6 @@
+#![warn(clippy::pedantic, clippy::cargo)]
+#![allow(clippy::cargo_common_metadata)]
+
 #[macro_use]
 extern crate anyhow;
 #[macro_use]
@@ -7,6 +10,7 @@ mod github;
 mod types;
 
 use std::{
+    borrow::ToOwned,
     collections::{btree_map::Entry, BTreeMap, BTreeSet},
     env,
     fs::File,
@@ -35,7 +39,7 @@ impl ChannelPatterns {
     fn find_channels(&self, base: &str) -> BTreeSet<String> {
         self.patterns
             .iter()
-            .flat_map(|(b, c)| match b.find_at(base, 0) {
+            .filter_map(|(b, c)| match b.find_at(base, 0) {
                 Some(m) if m.end() == base.len() => Some((b, c)),
                 _ => None,
             })
@@ -55,7 +59,7 @@ impl FromStr for ChannelPatterns {
                     Regex::new(base)?,
                     channels
                         .split_whitespace()
-                        .map(|s| s.to_owned())
+                        .map(ToOwned::to_owned)
                         .collect::<Vec<_>>(),
                 )),
                 None => bail!("invalid channel pattern `{s}`"),
@@ -253,14 +257,7 @@ fn sync_prs(
     }
 
     let mut git_cmd = process::Command::new("git");
-    let kind = if !local_repo.exists() {
-        let url = format!("https://github.com/{}/{}", &state.owner, &state.repo);
-        git_cmd
-            .arg("clone")
-            .args([&url, "--filter", "tree:0", "--bare"])
-            .arg(local_repo);
-        "clone"
-    } else {
+    let kind = if local_repo.exists() {
         git_cmd.arg("-C").arg(local_repo).args([
             "fetch",
             "--force",
@@ -269,6 +266,13 @@ fn sync_prs(
             "refs/heads/*:refs/heads/*",
         ]);
         "fetch"
+    } else {
+        let url = format!("https://github.com/{}/{}", &state.owner, &state.repo);
+        git_cmd
+            .arg("clone")
+            .args([&url, "--filter", "tree:0", "--bare"])
+            .arg(local_repo);
+        "clone"
     };
 
     let git_status = git_cmd.spawn()?.wait()?;
@@ -287,10 +291,9 @@ fn sync_prs(
         .filter(|(_, cs)| !cs.is_empty())
         .collect::<BTreeMap<_, _>>();
 
-    for (id, pr) in state.pull_requests.iter_mut() {
-        let merge = match pr.merge_commit.as_ref() {
-            Some(m) => m,
-            None => continue,
+    for (id, pr) in &mut state.pull_requests {
+        let Some(merge) = pr.merge_commit.as_ref() else {
+            continue;
         };
         let chans = match patterns.get(pr.base_ref.as_str()) {
             Some(chans) if chans != &pr.landed_in => chans,
@@ -306,7 +309,7 @@ fn sync_prs(
             std::str::from_utf8(&landed.stdout)?
                 .split_whitespace()
                 .filter(|&b| !pr.landed_in.contains(b))
-                .map(|s| s.to_owned())
+                .map(ToOwned::to_owned)
                 .collect::<Vec<_>>()
         } else {
             bail!(
@@ -342,16 +345,15 @@ fn format_history<V, A: Clone, F: Fn(&V, DateTime, &A) -> Item>(
     // is easier for now
     id_suffix: impl Fn(&A) -> String,
 ) -> Result<Vec<Item>> {
-    let since = Utc::now() - Duration::hours(age_hours as i64);
+    let since = Utc::now() - Duration::hours(age_hours.into());
 
     history
         .iter()
         .rev()
         .take_while(|(changed, _, _)| changed >= &since)
         .map(|(changed, id, how)| {
-            let entry = match items.get(id.as_str()) {
-                Some(i) => i,
-                None => bail!("database is corrupted (dangling key {})", id),
+            let Some(entry) = items.get(id.as_str()) else {
+                bail!("database is corrupted (dangling key {})", id)
             };
             Ok(Item {
                 guid: Some(Guid {
@@ -366,7 +368,7 @@ fn format_history<V, A: Clone, F: Fn(&V, DateTime, &A) -> Item>(
 
 fn new_rss_item(tag: &str, title: &str, url: &str, changed: DateTime, body: &str) -> Item {
     ItemBuilder::default()
-        .title(Some(format!("{} {}", tag, title)))
+        .title(Some(format!("{tag} {title}")))
         .link(Some(url.to_string()))
         .pub_date(Some(changed.to_rfc2822()))
         .content(Some(body.to_string()))
@@ -434,7 +436,7 @@ fn emit_prs(state: &State, age_hours: u32) -> Result<Channel> {
     Ok(channel)
 }
 
-fn write_feed(to: Option<PathBuf>, channel: Channel) -> Result<Option<State>> {
+fn write_feed(to: Option<PathBuf>, channel: &Channel) -> Result<Option<State>> {
     match to {
         Some(to) => {
             let new_file =
@@ -482,12 +484,12 @@ fn main() -> Result<()> {
         }
         Command::EmitIssues(cmd) => {
             with_state(cmd.state_file, |s| {
-                write_feed(cmd.out, emit_issues(&s, cmd.age_hours)?)
+                write_feed(cmd.out, &emit_issues(&s, cmd.age_hours)?)
             })?;
         }
         Command::EmitPrs(cmd) => {
             with_state(cmd.state_file, |s| {
-                write_feed(cmd.out, emit_prs(&s, cmd.age_hours)?)
+                write_feed(cmd.out, &emit_prs(&s, cmd.age_hours)?)
             })?;
         }
     };
