@@ -14,7 +14,7 @@ use std::{
     collections::{btree_map::Entry, BTreeMap, BTreeSet},
     env,
     fs::File,
-    io::{BufReader, BufWriter},
+    io::BufWriter,
     path::{Path, PathBuf},
     process,
     str::FromStr,
@@ -26,7 +26,7 @@ use clap::{Args, Parser, Subcommand};
 use github::Github;
 use regex::Regex;
 use rss::{Channel, ChannelBuilder, Guid, Item, ItemBuilder};
-use serde_json::{from_reader, to_writer};
+use serde_json::to_writer;
 use state::{DateTime, IssueAction, PullAction, State, STATE_VERSION};
 use tempfile::NamedTempFile;
 
@@ -141,21 +141,13 @@ fn with_state<F>(state_file: impl AsRef<Path>, f: F) -> Result<()>
 where
     F: FnOnce(State) -> Result<Option<State>>,
 {
-    let state_file = state_file.as_ref();
-    let old_state: State = from_reader(BufReader::new(File::open(state_file)?))?;
-    if old_state.version != STATE_VERSION {
-        bail!(
-            "expected state version {}, got {}",
-            STATE_VERSION,
-            old_state.version
-        );
-    }
-
+    let old_state = State::from_file(&state_file)?;
     let new_state = f(old_state)?;
 
     if let Some(state) = new_state {
         let new_state_file = NamedTempFile::new_in(
             state_file
+                .as_ref()
                 .ancestors()
                 .nth(1)
                 .unwrap_or_else(|| Path::new(".")),

@@ -1,8 +1,14 @@
 #![allow(non_camel_case_types)]
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs::File,
+    io::BufReader,
+    path::Path,
+};
 
 use serde::{Deserialize, Serialize};
+use serde_json::from_reader;
 
 pub type DateTime = chrono::DateTime<chrono::Utc>;
 #[allow(clippy::upper_case_acronyms)]
@@ -25,6 +31,20 @@ pub struct State {
     pub pull_requests_updated: Option<DateTime>,
     pub pull_requests: BTreeMap<String, PullRequest>,
     pub pull_history: Vec<(DateTime, String, PullAction)>,
+}
+
+impl State {
+    pub(crate) fn from_file<T: AsRef<Path>>(file: T) -> anyhow::Result<Self> {
+        let state: State = from_reader(BufReader::new(File::open(file)?))?;
+        if state.version != STATE_VERSION {
+            bail!(
+                "expected state version {}, got {}",
+                STATE_VERSION,
+                state.version
+            );
+        }
+        Ok(state)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
