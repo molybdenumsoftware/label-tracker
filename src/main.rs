@@ -137,12 +137,23 @@ struct EmitArgs {
     out: Option<PathBuf>,
 }
 
-fn with_state<F>(state_file: impl AsRef<Path>, f: F) -> Result<()>
+fn with_state_and_github<F>(state_file: impl AsRef<Path>, f: F) -> Result<()>
 where
-    F: FnOnce(State) -> Result<Option<State>>,
+    F: FnOnce(State, &Github) -> Result<Option<State>>,
 {
+    let github_api_token =
+        env::var("GITHUB_API_TOKEN").context("failed to load GITHUB_API_TOKEN")?;
+
     let old_state = State::from_file(&state_file)?;
-    let new_state = f(old_state)?;
+
+    let client = github::Github::new(
+        &github_api_token,
+        &old_state.owner,
+        &old_state.repo,
+        &old_state.label,
+    )?;
+
+    let new_state = f(old_state, &client)?;
 
     if let Some(state) = new_state {
         let new_state_file = NamedTempFile::new_in(
@@ -158,25 +169,6 @@ where
     }
 
     Ok(())
-}
-
-fn with_state_and_github<F>(state_file: impl AsRef<Path>, f: F) -> Result<()>
-where
-    F: FnOnce(State, &Github) -> Result<Option<State>>,
-{
-    let github_api_token =
-        env::var("GITHUB_API_TOKEN").context("failed to load GITHUB_API_TOKEN")?;
-
-    with_state(state_file, |old_state| {
-        let client = github::Github::new(
-            &github_api_token,
-            &old_state.owner,
-            &old_state.repo,
-            &old_state.label,
-        )?;
-
-        f(old_state, &client)
-    })
 }
 
 fn sync_issues(mut state: State, github: &github::Github) -> Result<Option<State>> {
