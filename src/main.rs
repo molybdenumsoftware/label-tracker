@@ -475,14 +475,12 @@ fn main() -> Result<()> {
             })?;
         }
         Command::EmitIssues(cmd) => {
-            with_state(cmd.state_file, |s| {
-                write_feed(cmd.out, &issues_feed(&s, cmd.age_hours))
-            })?;
+            let state = State::from_file(cmd.state_file)?;
+            write_feed(cmd.out, &issues_feed(&state, cmd.age_hours))?;
         }
         Command::EmitPrs(cmd) => {
-            with_state(cmd.state_file, |s| {
-                write_feed(cmd.out, &prs_feed(&s, cmd.age_hours))
-            })?;
+            let state = State::from_file(cmd.state_file)?;
+            write_feed(cmd.out, &prs_feed(&state, cmd.age_hours))?;
         }
     };
 
