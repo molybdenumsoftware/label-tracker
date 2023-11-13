@@ -39,7 +39,7 @@ impl ChannelPatterns {
     fn find_channels(&self, base: &str) -> BTreeSet<String> {
         self.patterns
             .iter()
-            .filter(|(b, _)| matches!(b.find_at(base, 0), Some(m) if m.end() == base.len()))
+            .filter(|(b, _)| matches!(b.find(base), Some(m) if m.end() == base.len()))
             .flat_map(|(b, c)| c.iter().map(|chan| b.replace(base, chan).to_string()))
             .collect()
     }
