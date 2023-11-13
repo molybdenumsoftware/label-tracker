@@ -6,6 +6,7 @@ extern crate anyhow;
 #[macro_use]
 extern crate log;
 
+mod full_matchable_regex;
 mod github;
 mod state;
 
@@ -23,6 +24,7 @@ use std::{
 use anyhow::{Context, Result};
 use chrono::{Duration, Utc};
 use clap::{Args, Parser, Subcommand};
+use full_matchable_regex::FullMatchableRegex;
 use github::Github;
 use regex::Regex;
 use rss::{Channel, ChannelBuilder, Guid, Item, ItemBuilder};
@@ -39,7 +41,7 @@ impl ChannelPatterns {
     fn find_channels(&self, base: &str) -> BTreeSet<String> {
         self.patterns
             .iter()
-            .filter(|(b, _)| matches!(b.find(base), Some(m) if m.end() == base.len()))
+            .filter(|(b, _)| b.is_full_match(base))
             .flat_map(|(b, c)| c.iter().map(|chan| b.replace(base, chan).to_string()))
             .collect()
     }
