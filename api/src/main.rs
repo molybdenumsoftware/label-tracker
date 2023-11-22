@@ -51,7 +51,21 @@ mod test {
     use crate::{app, Channel, LandedIn};
 
     // IDEA: return a struct that implements drop and kills db when dropped, this means when test exits db is killd (even on panic)
-    fn setup_database() -> rocket::Rocket<rocket::Build> {
+
+    // If we want to share between tests -> RC 
+    struct TestContext {
+        dir: tempfile::TempDir,
+        postgres: Child,
+        // have function that returns something
+    }
+
+    impl Drop for TestContext {
+        fn drop(&mut self) {
+            self.postgres.kill().unwrap()
+        }
+    }
+
+    fn setup_database() -> TestContext {
         static POSTGRES_SERVER: Lazy<Child> = Lazy::new(|| {
             let tmp_dir = tempfile::tempdir().unwrap();
             let sockets_dir = tmp_dir.path().join("sockets");
