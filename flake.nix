@@ -28,12 +28,15 @@
       };
 
       devShells.default = pkgs.mkShell {
-        inputsFrom = [packages.label-tracker packages.fetcher];
+        inputsFrom = pkgs.lib.attrsets.attrValues packages;
         packages = with pkgs; [rustfmt rust-analyzer clippy];
       };
 
-      checks.build = packages.label-tracker;
-      checks.formatting = treefmtEval.config.build.check self;
+      checks =
+        packages
+        // {
+          formatting = treefmtEval.config.build.check self;
+        };
 
       formatter = treefmtEval.config.build.wrapper;
     })
