@@ -43,10 +43,9 @@ fn rocket() -> _ {
 mod test {
     use rocket::{figment::Figment, http::Status, local::blocking::Client};
 
-    use crate::{Channel, LandedIn, app};
+    use crate::{app, Channel, LandedIn};
 
     fn setup_database() -> rocket::Rocket<rocket::Build> {
-
         rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
     }
 

@@ -3,8 +3,8 @@
   pkgs,
 }:
 rustPlatform.buildRustPackage {
-  name = "fetcher";
+  name = "api";
   cargoLock.lockFile = ./Cargo.lock;
   src = ./.;
-  buildAndTestSubdir = "fetcher";
+  buildAndTestSubdir = "api";
 }

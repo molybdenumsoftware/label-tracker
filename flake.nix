@@ -24,6 +24,7 @@
       packages = rec {
         label-tracker = pkgs.callPackage ./label-tracker.nix {};
         fetcher = pkgs.callPackage ./fetcher.nix {};
+        api = pkgs.callPackage ./api.nix {};
       };
 
       devShells.default = pkgs.mkShell {
