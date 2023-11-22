@@ -38,11 +38,15 @@ struct ChannelPatterns {
 }
 
 impl ChannelPatterns {
-    fn find_channels(&self, base: &str) -> BTreeSet<String> {
+    fn find_channels(&self, target: &str) -> BTreeSet<String> {
         self.patterns
             .iter()
-            .filter(|(b, _)| b.is_full_match(base))
-            .flat_map(|(b, c)| c.iter().map(|chan| b.replace(base, chan).to_string()))
+            .filter(|(target_regex, _)| target_regex.is_full_match(target))
+            .flat_map(|(target_regex, channel_globs)| {
+                channel_globs
+                    .iter()
+                    .map(|channel_glob| target_regex.replace(target, channel_glob).to_string())
+            })
             .collect()
     }
 }
@@ -54,9 +58,9 @@ impl FromStr for ChannelPatterns {
         let patterns = s
             .split(',')
             .map(|s| match s.trim().split_once(':') {
-                Some((base, channels)) => Ok((
-                    Regex::new(base)?,
-                    channels
+                Some((target_regex, channel_globs)) => Ok((
+                    Regex::new(target_regex)?,
+                    channel_globs
                         .split_whitespace()
                         .map(ToOwned::to_owned)
                         .collect::<Vec<_>>(),
@@ -263,30 +267,30 @@ fn sync_prs(
         bail!("{kind} failed: {git_status}");
     }
 
-    let branches = state
+    let targets = state
         .pull_requests
         .values()
         .map(|pr| pr.base_ref.clone())
         .collect::<BTreeSet<_>>();
-    let patterns = branches
+    let patterns = targets
         .iter()
-        .map(|b| (b.as_str(), channel_patterns.find_channels(b)))
-        .filter(|(_, cs)| !cs.is_empty())
+        .map(|target| (target.as_str(), channel_patterns.find_channels(target)))
+        .filter(|(_, channel_globs)| !channel_globs.is_empty())
         .collect::<BTreeMap<_, _>>();
 
     for (id, pr) in &mut state.pull_requests {
         let Some(merge) = pr.merge_commit.as_ref() else {
             continue;
         };
-        let chans = match patterns.get(pr.base_ref.as_str()) {
-            Some(chans) if chans != &pr.landed_in => chans,
+        let channel_globs = match patterns.get(pr.base_ref.as_str()) {
+            Some(channel_globs) if channel_globs != &pr.landed_in => channel_globs,
             _ => continue,
         };
         let landed = process::Command::new("git")
             .arg("-C")
             .arg(local_repo)
             .args(["branch", "--contains", merge, "--list"])
-            .args(chans)
+            .args(channel_globs)
             .output()?;
         let landed = if landed.status.success() {
             std::str::from_utf8(&landed.stdout)?
