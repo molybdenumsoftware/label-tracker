@@ -22,8 +22,8 @@
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
     in rec {
       packages = rec {
-        label-tracker = pkgs.callPackage ./default.nix {};
-        default = label-tracker;
+        label-tracker = pkgs.callPackage ./label-tracker.nix {};
+        fetcher = pkgs.callPackage ./fetcher.nix {};
       };
 
       devShells.default = pkgs.mkShell {
