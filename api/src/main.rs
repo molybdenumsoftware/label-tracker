@@ -42,15 +42,15 @@ fn rocket() -> _ {
 #[cfg(test)]
 mod test {
     use once_cell::sync::Lazy;
-    use rocket::{figment::Figment, http::Status, local::blocking::Client};
+    use rocket::{http::Status, local::blocking::Client};
     use std::{
         fs,
-        os::unix::process::CommandExt,
-        process::{Child, Command},
+        process::{self, Child, Command},
     };
 
     use crate::{app, Channel, LandedIn};
 
+    // IDEA: return a struct that implements drop and kills db when dropped, this means when test exits db is killd (even on panic)
     fn setup_database() -> rocket::Rocket<rocket::Build> {
         static POSTGRES_SERVER: Lazy<Child> = Lazy::new(|| {
             let tmp_dir = tempfile::tempdir().unwrap();
@@ -73,12 +73,15 @@ mod test {
                     "unix_socket_directories={}",
                     sockets_dir.to_str().unwrap()
                 ))
-                .process_group(0)
                 .spawn()
                 .unwrap()
         });
 
-        println!("psql pid is {}", POSTGRES_SERVER.id());
+        println!(
+            "our pid is {} psql pid is {}",
+            process::id(),
+            POSTGRES_SERVER.id()
+        );
 
         // static DB:
         // postgres -D /tmp/data -c unix_socket_directories=/tmp/psql.sockets
