@@ -34,12 +34,18 @@ fn rocket() -> _ {
 
 #[cfg(test)]
 mod test {
-    use rocket::{http::Status, local::blocking::Client};
+    use rocket::{http::Status, local::blocking::Client, figment::Figment};
 
     use crate::{LandedIn, Channel};
 
+    fn setup_database() -> rocket::Rocket<rocket::Build> {
+        
+        rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
+    }
+
     #[test]
     fn pr_not_found() {
+         setup_database().attach(super::rocket());
         let client = Client::tracked(super::rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         assert_eq!(response.status(), Status::NotFound);
@@ -48,6 +54,7 @@ mod test {
 
     #[test]
     fn pr_landed_in_master() {
+        setup_database();
         // <<< TODO: set up some state so 2124 has landed in master >>>
         let client = Client::tracked(super::rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
