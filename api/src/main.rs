@@ -45,6 +45,7 @@ mod test {
     use rocket::{figment::Figment, http::Status, local::blocking::Client};
     use std::{
         fs,
+        os::unix::process::CommandExt,
         process::{Child, Command},
     };
 
@@ -55,6 +56,7 @@ mod test {
             let tmp_dir = tempfile::tempdir().unwrap();
             let sockets_dir = tmp_dir.path().join("sockets");
             let data_dir = tmp_dir.path().join("data");
+            std::boxed::Box::<tempfile::TempDir>::leak(Box::new(tmp_dir));
             fs::create_dir(&sockets_dir).unwrap();
 
             assert!(Command::new("initdb")
@@ -71,14 +73,17 @@ mod test {
                     "unix_socket_directories={}",
                     sockets_dir.to_str().unwrap()
                 ))
+                .process_group(0)
                 .spawn()
                 .unwrap()
         });
 
+        println!("psql pid is {}", POSTGRES_SERVER.id());
+
         // static DB:
         // postgres -D /tmp/data -c unix_socket_directories=/tmp/psql.sockets
-        rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
-        // todo!()
+        //<<< rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
+        todo!()
     }
 
     #[test]
