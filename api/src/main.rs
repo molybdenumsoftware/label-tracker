@@ -41,13 +41,16 @@ fn rocket() -> _ {
 
 #[cfg(test)]
 mod test {
+    use std::process;
+
     use rocket::{figment::Figment, http::Status, local::blocking::Client};
 
     use crate::{app, Channel, LandedIn};
 
     fn setup_database() -> rocket::Rocket<rocket::Build> {
+        // static DB: 
         // postgres -D /tmp/data -c unix_socket_directories=/tmp/psql.sockets
-        rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
+        // rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
     }
 
     #[test]
