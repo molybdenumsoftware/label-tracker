@@ -39,7 +39,7 @@ mod test {
     use crate::{LandedIn, Channel};
 
     fn setup_database() -> rocket::Rocket<rocket::Build> {
-        
+
         rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
     }
 
