@@ -54,15 +54,24 @@ mod test {
         let tmp_dir = tempfile::tempdir().unwrap();
         let sockets_dir = tmp_dir.path().join("sockets");
         let data_dir = tmp_dir.path().join("data");
-        fs::create_dir(&sockets).unwrap();
+        fs::create_dir(&sockets_dir).unwrap();
 
-        assert!(
-            Command::new("initdb")
-                .arg(&data_dir)
-                .status()
-                .unwrap()
-                .success()
-        );
+        assert!(Command::new("initdb")
+            .arg(&data_dir)
+            .status()
+            .unwrap()
+            .success());
+
+        Command::new("postgres")
+            .arg("-D")
+            .arg(data_dir)
+            .arg("-c")
+            .arg(format!(
+                "unix_socket_directories={}",
+                sockets_dir.to_str().unwrap()
+            ))
+            .spawn()
+            .unwrap();
 
         // static DB:
         // postgres -D /tmp/data -c unix_socket_directories=/tmp/psql.sockets
