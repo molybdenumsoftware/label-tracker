@@ -5,8 +5,9 @@
 extern crate rocket;
 
 use rocket::{
+    fairing::AdHoc,
     http::Status,
-    serde::{json::Json, Serialize, Deserialize},
+    serde::{json::Json, Deserialize, Serialize},
 };
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -27,16 +28,22 @@ fn landed(pr: &str) -> Result<Json<LandedIn>, (Status, &'static str)> {
     // }))
 }
 
+fn app() -> AdHoc {
+    AdHoc::on_ignite("main", |rocket| async {
+        rocket.mount("/", routes![landed])
+    })
+}
+
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![landed])
+    rocket::build().attach(app())
 }
 
 #[cfg(test)]
 mod test {
-    use rocket::{http::Status, local::blocking::Client, figment::Figment};
+    use rocket::{figment::Figment, http::Status, local::blocking::Client};
 
-    use crate::{LandedIn, Channel};
+    use crate::{Channel, LandedIn, app};
 
     fn setup_database() -> rocket::Rocket<rocket::Build> {
 
@@ -45,7 +52,7 @@ mod test {
 
     #[test]
     fn pr_not_found() {
-         setup_database().attach(super::rocket());
+        setup_database().attach(app());
         let client = Client::tracked(super::rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         assert_eq!(response.status(), Status::NotFound);
@@ -59,6 +66,11 @@ mod test {
         let client = Client::tracked(super::rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         assert_eq!(response.status(), Status::Ok);
-        assert_eq!(response.into_json::<LandedIn>().unwrap(), LandedIn{channels: vec![Channel("master".to_owned())]});
+        assert_eq!(
+            response.into_json::<LandedIn>().unwrap(),
+            LandedIn {
+                channels: vec![Channel("master".to_owned())]
+            }
+        );
     }
 }
