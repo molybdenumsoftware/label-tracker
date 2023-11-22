@@ -27,7 +27,7 @@
       };
 
       devShells.default = pkgs.mkShell {
-        inputsFrom = [packages.default];
+        inputsFrom = [packages.label-tracker packages.fetcher];
         packages = with pkgs; [rustfmt rust-analyzer clippy];
       };
 
