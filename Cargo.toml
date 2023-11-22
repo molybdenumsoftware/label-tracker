@@ -1,3 +1,6 @@
+[workspace]
+members = ["fetcher", "api", "store"]
+
 [package]
 name = "label-tracker"
 description = "track github issues and pull requests by their labels"
