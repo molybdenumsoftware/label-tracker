@@ -46,6 +46,7 @@ mod test {
     use crate::{app, Channel, LandedIn};
 
     fn setup_database() -> rocket::Rocket<rocket::Build> {
+        // postgres -D /tmp/data -c unix_socket_directories=/tmp/psql.sockets
         rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
     }
 
