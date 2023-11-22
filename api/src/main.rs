@@ -41,42 +41,44 @@ fn rocket() -> _ {
 
 #[cfg(test)]
 mod test {
+    use once_cell::sync::Lazy;
+    use rocket::{figment::Figment, http::Status, local::blocking::Client};
     use std::{
         fs,
-        process::{self, Command},
+        process::{Child, Command},
     };
-
-    use rocket::{figment::Figment, http::Status, local::blocking::Client};
 
     use crate::{app, Channel, LandedIn};
 
     fn setup_database() -> rocket::Rocket<rocket::Build> {
-        let tmp_dir = tempfile::tempdir().unwrap();
-        let sockets_dir = tmp_dir.path().join("sockets");
-        let data_dir = tmp_dir.path().join("data");
-        fs::create_dir(&sockets_dir).unwrap();
+        static POSTGRES_SERVER: Lazy<Child> = Lazy::new(|| {
+            let tmp_dir = tempfile::tempdir().unwrap();
+            let sockets_dir = tmp_dir.path().join("sockets");
+            let data_dir = tmp_dir.path().join("data");
+            fs::create_dir(&sockets_dir).unwrap();
 
-        assert!(Command::new("initdb")
-            .arg(&data_dir)
-            .status()
-            .unwrap()
-            .success());
+            assert!(Command::new("initdb")
+                .arg(&data_dir)
+                .status()
+                .unwrap()
+                .success());
 
-        Command::new("postgres")
-            .arg("-D")
-            .arg(data_dir)
-            .arg("-c")
-            .arg(format!(
-                "unix_socket_directories={}",
-                sockets_dir.to_str().unwrap()
-            ))
-            .spawn()
-            .unwrap();
+            Command::new("postgres")
+                .arg("-D")
+                .arg(data_dir)
+                .arg("-c")
+                .arg(format!(
+                    "unix_socket_directories={}",
+                    sockets_dir.to_str().unwrap()
+                ))
+                .spawn()
+                .unwrap()
+        });
 
         // static DB:
         // postgres -D /tmp/data -c unix_socket_directories=/tmp/psql.sockets
-        // rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
-        todo!()
+        rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
+        // todo!()
     }
 
     #[test]
