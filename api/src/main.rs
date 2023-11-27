@@ -44,10 +44,10 @@ mod test {
     use rocket::{http::Status, local::blocking::Client};
     use std::{
         fs,
-        process::{self, Child, Command},
+        process::{Child, Command},
     };
 
-    use crate::{app, Channel, LandedIn};
+    use crate::{Channel, LandedIn};
 
     // IDEA: return a struct that implements drop and kills db when dropped, this means when test exits db is killd (even on panic)
 
@@ -61,7 +61,7 @@ mod test {
 
     impl Drop for TestContext {
         fn drop(&mut self) {
-            self.postgres.kill().unwrap()
+            self.postgres.kill().unwrap();
         }
     }
 
