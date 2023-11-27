@@ -29,8 +29,11 @@ struct LandedIn {
     channels: Vec<Channel>,
 }
 
+#[derive(Responder)]
 enum LandedError {
-
+    #[response(status = 404)]
+    PrNotFound(()),
+    Db(())
 }
 
 #[get("/landed/github/<pr>")]
