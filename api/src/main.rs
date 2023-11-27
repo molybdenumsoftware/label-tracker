@@ -55,7 +55,6 @@ mod test {
     // If we want to share between tests -> RC
     struct TestContext {
         tmp_dir: tempfile::TempDir,
-        //<<< socket: PathBuf,
         postgres: Child,
         // have function that returns something
     }
@@ -63,6 +62,7 @@ mod test {
     impl Drop for TestContext {
         fn drop(&mut self) {
             self.postgres.kill().unwrap();
+            self.postgres.wait().unwrap();
         }
     }
 
@@ -104,8 +104,6 @@ mod test {
                 .spawn()
                 .unwrap();
 
-            // static DB:
-            // postgres -D /tmp/data -c unix_socket_directories=/tmp/psql.sockets
             Self { tmp_dir, postgres }
         }
 
@@ -114,6 +112,7 @@ mod test {
                 Figment::from(rocket::Config::default())
                     .merge(("databases.data.url", self.db_url())),
             )
+            .attach(super::app())
         }
 
         fn db_url(&self) -> String {
@@ -123,19 +122,18 @@ mod test {
 
     #[test]
     fn pr_not_found() {
-        let _ctx = TestContext::init();
-        let client = Client::tracked(super::rocket()).unwrap();
+        let ctx = TestContext::init();
+        let client = Client::tracked(ctx.rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
-        std::thread::sleep(std::time::Duration::from_secs(300)); //<<<
         assert_eq!(response.status(), Status::NotFound);
         assert_eq!(response.into_string(), Some("PR not found".into()));
     }
 
     #[test]
     fn pr_landed_in_master() {
-        let _ctc = TestContext::init();
+        let ctx = TestContext::init();
         // <<< TODO: set up some state so 2124 has landed in master >>>
-        let client = Client::tracked(super::rocket()).unwrap();
+        let client = Client::tracked(ctx.rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(
