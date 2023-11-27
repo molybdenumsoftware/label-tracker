@@ -1,14 +1,12 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+use sqlx::{FromRow, Connection, Result};
+
+#[derive(FromRow)]
+pub struct GithubPr {
+    pub number: u64,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+impl GithubPr {
+    pub fn insert(self, db: impl Connection) -> Result<()> {
+        sqlx::query!("insert")
     }
 }
