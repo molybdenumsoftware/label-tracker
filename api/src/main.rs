@@ -41,7 +41,6 @@ fn rocket() -> _ {
 
 #[cfg(test)]
 mod test {
-    use once_cell::sync::Lazy;
     use rocket::{http::Status, local::blocking::Client};
     use std::{
         fs,
@@ -54,7 +53,8 @@ mod test {
 
     // If we want to share between tests -> RC
     struct TestContext {
-        dir: tempfile::TempDir,
+        tmp_dir: tempfile::TempDir,
+        //<<< socket: PathBuf,
         postgres: Child,
         // have function that returns something
     }
@@ -69,7 +69,6 @@ mod test {
         let tmp_dir = tempfile::tempdir().unwrap();
         let sockets_dir = tmp_dir.path().join("sockets");
         let data_dir = tmp_dir.path().join("data");
-        std::boxed::Box::<tempfile::TempDir>::leak(Box::new(tmp_dir));
         fs::create_dir(&sockets_dir).unwrap();
 
         assert!(Command::new("initdb")
@@ -78,7 +77,7 @@ mod test {
             .unwrap()
             .success());
 
-        Command::new("postgres")
+        let postgres = Command::new("postgres")
             .arg("-D")
             .arg(data_dir)
             .arg("-c")
@@ -89,16 +88,10 @@ mod test {
             .spawn()
             .unwrap();
 
-        println!(
-            "our pid is {} psql pid is {}",
-            process::id(),
-            POSTGRES_SERVER.id()
-        );
-
         // static DB:
         // postgres -D /tmp/data -c unix_socket_directories=/tmp/psql.sockets
         //<<< rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
-        todo!()
+        TestContext { tmp_dir, postgres }
     }
 
     #[test]
