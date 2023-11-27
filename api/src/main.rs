@@ -94,10 +94,10 @@ mod test {
         // listen_addresses down below), this just determines the name of the socket it listens to.
         const PORT: &str = "1";
 
-        fn socket(&self) -> Utf8PathBuf {
-            TestContext::sockets_dir(self.tmp_dir.path().try_into().unwrap())
-                .join(format!(".s.PGSQL.{}", Self::PORT))
-        }
+        //<<< fn socket_dir(&self) -> Utf8PathBuf {
+        //<<<     TestContext::sockets_dir(self.tmp_dir.path().try_into().unwrap())
+        //<<<         .join(format!(".s.PGSQL.{}", Self::PORT))
+        //<<< }
 
         fn sockets_dir(path: &Utf8Path) -> Utf8PathBuf {
             path.join("sockets")
@@ -139,7 +139,12 @@ mod test {
         }
 
         fn db_url(&self) -> String {
-            format!("postgres://{}", self.socket())
+            let dbname = "postgres"; // TODO
+            format!(
+                "postgresql:///{dbname}?host={}&port={}",
+                Self::sockets_dir(self.tmp_dir.path().try_into().unwrap()),
+                Self::PORT,
+            )
         }
     }
 
