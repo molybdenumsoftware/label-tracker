@@ -10,6 +10,12 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
 };
 
+use rocket_db_pools::sqlx;
+
+#[derive(rocket_db_pools::Database)]
+#[database("data")]
+struct Database(sqlx::Pool<sqlx::Postgres>);
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(crate = "rocket::serde")]
 struct Channel(String);
