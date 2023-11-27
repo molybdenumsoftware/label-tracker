@@ -68,7 +68,8 @@ mod test {
     use rocket::{figment::Figment, http::Status, local::blocking::Client, Rocket};
     use std::{
         fs,
-        process::{Child, Command}, thread,
+        process::{Child, Command},
+        thread,
     };
 
     use crate::{Channel, LandedIn};
@@ -140,13 +141,17 @@ mod test {
 
         fn db_url(&self) -> String {
             let dbname = "postgres"; // TODO
+
+            let sockets_dir = Self::sockets_dir(self.tmp_dir.path().try_into().unwrap())
+                .to_string()
+                .replace('/', "%2F");
+
             let url = format!(
-                "postgresql:///{dbname}?host={}&port={}",
-                Self::sockets_dir(self.tmp_dir.path().try_into().unwrap()),
+                "postgresql://{sockets_dir}:{}/{dbname}",
                 Self::PORT,
             );
+
             dbg!(&url);
-        thread::sleep_ms(100000);
             url
         }
     }
