@@ -41,10 +41,10 @@ fn rocket() -> _ {
 
 #[cfg(test)]
 mod test {
-    use rocket::{http::Status, local::blocking::Client};
+    use camino::{Utf8Path, Utf8PathBuf};
+    use rocket::{figment::Figment, http::Status, local::blocking::Client, Rocket};
     use std::{
         fs,
-        path::{Path, PathBuf},
         process::{Child, Command},
     };
 
@@ -71,17 +71,18 @@ mod test {
         // listen_addresses down below), this just determines the name of the socket it listens to.
         const PORT: &str = "1";
 
-        fn socket(self) -> PathBuf {
-            TestContext::sockets_dir(self.tmp_dir.path()).join(format!(".s.PGSQL.{}", Self::PORT))
+        fn socket(&self) -> Utf8PathBuf {
+            TestContext::sockets_dir(self.tmp_dir.path().try_into().unwrap())
+                .join(format!(".s.PGSQL.{}", Self::PORT))
         }
 
-        fn sockets_dir(path: &Path) -> PathBuf {
+        fn sockets_dir(path: &Utf8Path) -> Utf8PathBuf {
             path.join("sockets")
         }
 
         fn init() -> Self {
             let tmp_dir = tempfile::tempdir().unwrap();
-            let sockets_dir = Self::sockets_dir(tmp_dir.path());
+            let sockets_dir = Self::sockets_dir(tmp_dir.path().try_into().unwrap());
             let data_dir = tmp_dir.path().join("data");
             fs::create_dir(&sockets_dir).unwrap();
 
@@ -97,10 +98,7 @@ mod test {
                 .arg("-p")
                 .arg(Self::PORT)
                 .arg("-c")
-                .arg(format!(
-                    "unix_socket_directories={}",
-                    sockets_dir.to_str().unwrap()
-                ))
+                .arg(format!("unix_socket_directories={sockets_dir}"))
                 .arg("-c")
                 .arg("listen_addresses=")
                 .spawn()
@@ -111,9 +109,15 @@ mod test {
             Self { tmp_dir, postgres }
         }
 
-        fn rocket(&self) -> _ {
-            
-             rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
+        fn rocket(&self) -> Rocket<rocket::Build> {
+            rocket::custom(
+                Figment::from(rocket::Config::default())
+                    .merge(("databases.data.url", self.db_url())),
+            )
+        }
+
+        fn db_url(&self) -> String {
+            format!("pgsql://{}", self.socket())
         }
     }
 
@@ -129,7 +133,7 @@ mod test {
 
     #[test]
     fn pr_landed_in_master() {
-        setup_database();
+        let _ctc = TestContext::init();
         // <<< TODO: set up some state so 2124 has landed in master >>>
         let client = Client::tracked(super::rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
