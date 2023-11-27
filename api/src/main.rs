@@ -31,7 +31,7 @@ async fn landed(mut db: Connection<Data>, pr: &str) -> Result<Json<LandedIn>, (S
     sqlx::query(r#"SELECT "master" as channel"#)
         .fetch_one(&mut **db)
         .await
-        .and_then(|r| r.try_column("channel"))
+        .and_then(|r| r.try_column("channel").map())
         .ok();
     Err((Status::NotFound, "PR not found"))
     // Ok(Json(LandedIn {
