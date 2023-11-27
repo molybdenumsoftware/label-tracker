@@ -44,6 +44,7 @@ mod test {
     use rocket::{http::Status, local::blocking::Client};
     use std::{
         fs,
+        path::PathBuf,
         process::{Child, Command},
     };
 
@@ -65,7 +66,17 @@ mod test {
         }
     }
 
+    impl TestContext {
+        fn socket(self) -> PathBuf {
+            TestContext::sockets_dir(self.tmp_dir).join(format!($0))
+        }
+    }
+
     fn setup_database() -> TestContext {
+        // Note: postgres isn't actually going to listen on this port (see the empty
+        // listen_addresses down below), this just determines the name of the socket it listens to.
+        const PORT: &str = "1";
+
         let tmp_dir = tempfile::tempdir().unwrap();
         let sockets_dir = tmp_dir.path().join("sockets");
         let data_dir = tmp_dir.path().join("data");
@@ -77,14 +88,11 @@ mod test {
             .unwrap()
             .success());
 
-        // TODO: either pick a random available port, or figure out how to get
-        // postgres to start up without doing any tcp, just sockets
-        let port = "1";
         let postgres = Command::new("postgres")
             .arg("-D")
             .arg(data_dir)
             .arg("-p")
-            .arg(port)
+            .arg(PORT)
             .arg("-c")
             .arg(format!(
                 "unix_socket_directories={}",
