@@ -34,17 +34,20 @@ async fn landed(
     mut db: Connection<Data>,
     pr: &str,
 ) -> Result<Json<LandedIn>, (Status, &'static str)> {
-    let Ok(rows) = sqlx::query("SELECT 'master' as channel")
+    let rows = sqlx::query("SELECT 'master' as channel")
         .fetch_all(&mut **db)
-        .await
-    else {
+        .await;
+
+    let Ok(rows) = rows else {
         return Err((Status::NotFound, "PR not found"));
     };
+
     let channels = rows
         .into_iter()
         .map(|row| row.get::<String, _>("channel"))
         .map(Channel)
         .collect();
+
     Ok(Json(LandedIn { channels }))
 }
 
@@ -136,7 +139,7 @@ mod test {
         }
 
         fn db_url(&self) -> String {
-            format!("pgsql://{}", self.socket())
+            format!("postgres://{}", self.socket())
         }
     }
 
