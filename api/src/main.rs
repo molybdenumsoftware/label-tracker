@@ -79,7 +79,7 @@ mod test {
 
         // TODO: either pick a random available port, or figure out how to get
         // postgres to start up without doing any tcp, just sockets
-        let port = "5432";
+        let port = "1";
         let postgres = Command::new("postgres")
             .arg("-D")
             .arg(data_dir)
@@ -90,8 +90,8 @@ mod test {
                 "unix_socket_directories={}",
                 sockets_dir.to_str().unwrap()
             ))
-            //<<< .arg("-c")
-            //<<< .arg("listen_addresses=''")
+            .arg("-c")
+            .arg("listen_addresses=")
             .spawn()
             .unwrap();
 
@@ -103,12 +103,12 @@ mod test {
 
     #[test]
     fn pr_not_found() {
-        let ctx = setup_database();
+        let _ctx = setup_database();
         let client = Client::tracked(super::rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
+        std::thread::sleep(std::time::Duration::from_secs(300)); //<<<
         assert_eq!(response.status(), Status::NotFound);
         assert_eq!(response.into_string(), Some("PR not found".into()));
-        std::thread::sleep(std::time::Duration::from_secs(60)); //<<<
     }
 
     #[test]
