@@ -52,7 +52,7 @@ mod test {
 
     // IDEA: return a struct that implements drop and kills db when dropped, this means when test exits db is killd (even on panic)
 
-    // If we want to share between tests -> RC 
+    // If we want to share between tests -> RC
     struct TestContext {
         dir: tempfile::TempDir,
         postgres: Child,
@@ -105,7 +105,7 @@ mod test {
 
     #[test]
     fn pr_not_found() {
-        setup_database().attach(app());
+        //setup_database().attach(app());
         let client = Client::tracked(super::rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         assert_eq!(response.status(), Status::NotFound);
