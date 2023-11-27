@@ -10,7 +10,10 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
 };
 
-use rocket_db_pools::{sqlx::{self, Row}, Database, Connection};
+use rocket_db_pools::{
+    sqlx::{self, Row},
+    Connection, Database,
+};
 
 #[derive(Database)]
 #[database("data")]
@@ -27,12 +30,15 @@ struct LandedIn {
 }
 
 #[get("/landed/github/<pr>")]
-async fn landed(mut db: Connection<Data>, pr: &str) -> Result<Json<LandedIn>, (Status, &'static str)> {
-    sqlx::query(r#"SELECT "master" as channel"#)
+async fn landed(
+    mut db: Connection<Data>,
+    pr: &str,
+) -> Result<Json<LandedIn>, (Status, &'static str)> {
+    let channel: String = sqlx::query("SELECT 'master' as channel")
         .fetch_one(&mut **db)
         .await
-        .and_then(|r| r.get("channel"))
-        .ok();
+        .unwrap()
+        .get("channel");
     Err((Status::NotFound, "PR not found"))
     // Ok(Json(LandedIn {
     //     channels: vec![Channel("master".to_owned())],
