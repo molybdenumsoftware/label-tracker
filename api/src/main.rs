@@ -69,7 +69,7 @@ mod test {
     use std::{
         fs,
         process::{Child, Command},
-        thread,
+        thread, time::Duration,
     };
 
     use crate::{Channel, LandedIn};
@@ -95,10 +95,10 @@ mod test {
         // listen_addresses down below), this just determines the name of the socket it listens to.
         const PORT: &str = "1";
 
-        //<<< fn socket_dir(&self) -> Utf8PathBuf {
-        //<<<     TestContext::sockets_dir(self.tmp_dir.path().try_into().unwrap())
-        //<<<         .join(format!(".s.PGSQL.{}", Self::PORT))
-        //<<< }
+        fn socket_path(&self) -> Utf8PathBuf {
+            TestContext::sockets_dir(self.tmp_dir.path().try_into().unwrap())
+                .join(format!(".s.PGSQL.{}", Self::PORT))
+        }
 
         fn sockets_dir(path: &Utf8Path) -> Utf8PathBuf {
             path.join("sockets")
@@ -143,11 +143,11 @@ mod test {
         fn db_url(&self) -> String {
             let dbname = "postgres"; // TODO
 
-            let sockets_dir = Self::sockets_dir(self.tmp_dir.path().try_into().unwrap())
-                .to_string()
-                .replace('/', "%2F");
-
-            let url = format!("postgresql://{sockets_dir}:{}/{dbname}", Self::PORT,);
+            while !self.socket_path().exists() {
+                thread::sleep(Duration::from_millis(10));
+            }
+            
+            let url = format!("postgresql:///{dbname}?host={}&port={}",Self::sockets_dir(self.tmp_dir.path().try_into().unwrap()), Self::PORT,);
 
             dbg!(&url);
             url
