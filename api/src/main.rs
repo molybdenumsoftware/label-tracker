@@ -66,30 +66,28 @@ mod test {
     }
 
     fn setup_database() -> TestContext {
-        static POSTGRES_SERVER: Lazy<Child> = Lazy::new(|| {
-            let tmp_dir = tempfile::tempdir().unwrap();
-            let sockets_dir = tmp_dir.path().join("sockets");
-            let data_dir = tmp_dir.path().join("data");
-            std::boxed::Box::<tempfile::TempDir>::leak(Box::new(tmp_dir));
-            fs::create_dir(&sockets_dir).unwrap();
+        let tmp_dir = tempfile::tempdir().unwrap();
+        let sockets_dir = tmp_dir.path().join("sockets");
+        let data_dir = tmp_dir.path().join("data");
+        std::boxed::Box::<tempfile::TempDir>::leak(Box::new(tmp_dir));
+        fs::create_dir(&sockets_dir).unwrap();
 
-            assert!(Command::new("initdb")
-                .arg(&data_dir)
-                .status()
-                .unwrap()
-                .success());
+        assert!(Command::new("initdb")
+            .arg(&data_dir)
+            .status()
+            .unwrap()
+            .success());
 
-            Command::new("postgres")
-                .arg("-D")
-                .arg(data_dir)
-                .arg("-c")
-                .arg(format!(
-                    "unix_socket_directories={}",
-                    sockets_dir.to_str().unwrap()
-                ))
-                .spawn()
-                .unwrap()
-        });
+        Command::new("postgres")
+            .arg("-D")
+            .arg(data_dir)
+            .arg("-c")
+            .arg(format!(
+                "unix_socket_directories={}",
+                sockets_dir.to_str().unwrap()
+            ))
+            .spawn()
+            .unwrap();
 
         println!(
             "our pid is {} psql pid is {}",
