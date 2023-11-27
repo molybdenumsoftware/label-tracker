@@ -129,9 +129,10 @@ mod test {
             let n = Instant::now();
 
             while !socket_path.exists() {
-              assert!();
-              if Instant::now() - n > Duration::from_secs(5) {
-              }
+                assert!(
+                    n.elapsed() < Duration::from_secs(5),
+                    "db should start within 5 seconds"
+                );
                 thread::sleep(Duration::from_millis(10));
             }
 
@@ -150,14 +151,11 @@ mod test {
         fn db_url(&self) -> String {
             let dbname = "postgres"; // TODO
 
-            let url = format!(
+            format!(
                 "postgresql:///{dbname}?host={}&port={}",
                 Self::sockets_dir(self.tmp_dir.path().try_into().unwrap()),
                 Self::PORT,
-            );
-
-            dbg!(&url);
-            url
+            )
         }
     }
 
