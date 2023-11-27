@@ -10,11 +10,11 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
 };
 
-use rocket_db_pools::sqlx;
+use rocket_db_pools::{sqlx, Database};
 
-#[derive(rocket_db_pools::Database)]
+#[derive(Database)]
 #[database("data")]
-struct Database(sqlx::Pool<sqlx::Postgres>);
+struct Data(sqlx::Pool<sqlx::Postgres>);
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(crate = "rocket::serde")]
@@ -27,7 +27,12 @@ struct LandedIn {
 }
 
 #[get("/landed/github/<pr>")]
-fn landed(pr: &str) -> Result<Json<LandedIn>, (Status, &'static str)> {
+fn landed(mut db: Connection<Data>, pr: &str) -> Result<Json<LandedIn>, (Status, &'static str)> {
+    sqlx::query(r#"SELECT "master" as channel"#)
+        .fetch_one(&mut **db)
+        .await
+        .and_then(|r| Ok(r.try_get(0)?))
+        .ok();
     Err((Status::NotFound, "PR not found"))
     // Ok(Json(LandedIn {
     //     channels: vec![Channel("master".to_owned())],
@@ -36,7 +41,7 @@ fn landed(pr: &str) -> Result<Json<LandedIn>, (Status, &'static str)> {
 
 fn app() -> AdHoc {
     AdHoc::on_ignite("main", |rocket| async {
-        rocket.mount("/", routes![landed])
+        rocket.attach(Data::init()).mount("/", routes![landed])
     })
 }
 
