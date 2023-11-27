@@ -29,11 +29,15 @@ struct LandedIn {
     channels: Vec<Channel>,
 }
 
+enum LandedError {
+
+}
+
 #[get("/landed/github/<pr>")]
 async fn landed(
     mut db: Connection<Data>,
     pr: &str,
-) -> Result<Json<LandedIn>, (Status, &'static str)> {
+) -> Result<Json<LandedIn>, LandedError> {
     let rows = sqlx::query("SELECT 'master' as channel")
         .fetch_all(&mut **db)
         .await;
