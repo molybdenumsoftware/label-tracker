@@ -44,7 +44,7 @@ mod test {
     use rocket::{http::Status, local::blocking::Client};
     use std::{
         fs,
-        path::PathBuf,
+        path::{Path, PathBuf},
         process::{Child, Command},
     };
 
@@ -67,51 +67,59 @@ mod test {
     }
 
     impl TestContext {
-        fn socket(self) -> PathBuf {
-            TestContext::sockets_dir(self.tmp_dir).join(format!($0))
-        }
-    }
-
-    fn setup_database() -> TestContext {
         // Note: postgres isn't actually going to listen on this port (see the empty
         // listen_addresses down below), this just determines the name of the socket it listens to.
         const PORT: &str = "1";
 
-        let tmp_dir = tempfile::tempdir().unwrap();
-        let sockets_dir = tmp_dir.path().join("sockets");
-        let data_dir = tmp_dir.path().join("data");
-        fs::create_dir(&sockets_dir).unwrap();
+        fn socket(self) -> PathBuf {
+            TestContext::sockets_dir(self.tmp_dir.path()).join(format!(".s.PGSQL.{}", Self::PORT))
+        }
 
-        assert!(Command::new("initdb")
-            .arg(&data_dir)
-            .status()
-            .unwrap()
-            .success());
+        fn sockets_dir(path: &Path) -> PathBuf {
+            path.join("sockets")
+        }
 
-        let postgres = Command::new("postgres")
-            .arg("-D")
-            .arg(data_dir)
-            .arg("-p")
-            .arg(PORT)
-            .arg("-c")
-            .arg(format!(
-                "unix_socket_directories={}",
-                sockets_dir.to_str().unwrap()
-            ))
-            .arg("-c")
-            .arg("listen_addresses=")
-            .spawn()
-            .unwrap();
+        fn init() -> Self {
+            let tmp_dir = tempfile::tempdir().unwrap();
+            let sockets_dir = Self::sockets_dir(tmp_dir.path());
+            let data_dir = tmp_dir.path().join("data");
+            fs::create_dir(&sockets_dir).unwrap();
 
-        // static DB:
-        // postgres -D /tmp/data -c unix_socket_directories=/tmp/psql.sockets
-        //<<< rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
-        TestContext { tmp_dir, postgres }
+            assert!(Command::new("initdb")
+                .arg(&data_dir)
+                .status()
+                .unwrap()
+                .success());
+
+            let postgres = Command::new("postgres")
+                .arg("-D")
+                .arg(data_dir)
+                .arg("-p")
+                .arg(Self::PORT)
+                .arg("-c")
+                .arg(format!(
+                    "unix_socket_directories={}",
+                    sockets_dir.to_str().unwrap()
+                ))
+                .arg("-c")
+                .arg("listen_addresses=")
+                .spawn()
+                .unwrap();
+
+            // static DB:
+            // postgres -D /tmp/data -c unix_socket_directories=/tmp/psql.sockets
+            Self { tmp_dir, postgres }
+        }
+
+        fn rocket(&self) -> _ {
+            
+             rocket::custom(Figment::from(rocket::Config::default()).merge(("databases.data.url", db)))
+        }
     }
 
     #[test]
     fn pr_not_found() {
-        let _ctx = setup_database();
+        let _ctx = TestContext::init();
         let client = Client::tracked(super::rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         std::thread::sleep(std::time::Duration::from_secs(300)); //<<<
