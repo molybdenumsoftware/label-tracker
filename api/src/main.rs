@@ -34,15 +34,18 @@ async fn landed(
     mut db: Connection<Data>,
     pr: &str,
 ) -> Result<Json<LandedIn>, (Status, &'static str)> {
-    let channel: String = sqlx::query("SELECT 'master' as channel")
-        .fetch_one(&mut **db)
+    let Ok(rows) = sqlx::query("SELECT 'master' as channel")
+        .fetch_all(&mut **db)
         .await
-        .unwrap()
-        .get("channel");
-    Err((Status::NotFound, "PR not found"))
-    // Ok(Json(LandedIn {
-    //     channels: vec![Channel("master".to_owned())],
-    // }))
+    else {
+        return Err((Status::NotFound, "PR not found"));
+    };
+    let channels = rows
+        .into_iter()
+        .map(|row| row.get::<String, _>("channel"))
+        .map(Channel)
+        .collect();
+    Ok(Json(LandedIn { channels }))
 }
 
 fn app() -> AdHoc {
