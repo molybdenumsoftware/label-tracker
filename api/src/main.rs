@@ -33,21 +33,21 @@ struct LandedIn {
 enum LandedError {
     #[response(status = 404)]
     PrNotFound(()),
-    Db(())
+    #[response(status = 500)]
+    Db(()),
+}
+
+impl From<sqlx::Error> for LandedError {
+    fn from(value: sqlx::Error) -> Self {
+        Self::Db(())
+    }
 }
 
 #[get("/landed/github/<pr>")]
-async fn landed(
-    mut db: Connection<Data>,
-    pr: &str,
-) -> Result<Json<LandedIn>, LandedError> {
+async fn landed(mut db: Connection<Data>, pr: &str) -> Result<Json<LandedIn>, LandedError> {
     let rows = sqlx::query("SELECT 'master' as channel")
         .fetch_all(&mut **db)
-        .await;
-
-    let Ok(rows) = rows else {
-        return Err((Status::NotFound, "PR not found"));
-    };
+        .await?;
 
     let channels = rows
         .into_iter()
