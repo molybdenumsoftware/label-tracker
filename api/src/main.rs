@@ -134,7 +134,8 @@ mod test {
         fn rocket(&self) -> Rocket<rocket::Build> {
             rocket::custom(
                 Figment::from(rocket::Config::default())
-                    .merge(("databases.data.url", self.db_url())),
+                    .merge(("databases.data.url", self.db_url()))
+                    .merge(("log_level", rocket::config::LogLevel::Debug)),
             )
             .attach(super::app())
         }
@@ -146,10 +147,7 @@ mod test {
                 .to_string()
                 .replace('/', "%2F");
 
-            let url = format!(
-                "postgresql://{sockets_dir}:{}/{dbname}",
-                Self::PORT,
-            );
+            let url = format!("postgresql://{sockets_dir}:{}/{dbname}", Self::PORT,);
 
             dbg!(&url);
             url
