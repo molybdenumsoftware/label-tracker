@@ -1,11 +1,14 @@
-use sqlx::{FromRow, Connection, Result};
+use sqlx::{Connection, FromRow, Result};
 
 #[derive(FromRow)]
-pub struct GithubPr {
-    pub number: u64,
+pub struct Landing {
+    pub github_pr: u64,
+    pub channel: String,
 }
 
-impl GithubPr {
+impl Landing {
+    pub const TABLE: &str = "landings";
+
     pub fn insert(self, db: impl Connection) -> Result<()> {
         sqlx::query!("insert")
     }

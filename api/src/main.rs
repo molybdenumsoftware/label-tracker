@@ -73,6 +73,7 @@ fn rocket() -> _ {
 mod test {
     use camino::{Utf8Path, Utf8PathBuf};
     use rocket::{figment::Figment, http::Status, local::blocking::Client, Rocket};
+    use store::Landing;
     use std::{
         fs,
         process::{Child, Command},
@@ -178,7 +179,7 @@ mod test {
     #[test]
     fn pr_landed_in_master() {
         let ctx = TestContext::init();
-        // <<< TODO: set up some state so 2124 has landed in master >>>
+        let landing = Landing
         let client = Client::tracked(ctx.rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         assert_eq!(response.status(), Status::Ok);

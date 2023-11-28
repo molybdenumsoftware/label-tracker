@@ -68,6 +68,7 @@ dependencies = [
  "rocket",
  "rocket_db_pools",
  "sqlx",
+ "store",
  "tempfile",
 ]
 
