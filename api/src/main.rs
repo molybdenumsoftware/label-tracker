@@ -73,13 +73,13 @@ fn rocket() -> _ {
 mod test {
     use camino::{Utf8Path, Utf8PathBuf};
     use rocket::{figment::Figment, http::Status, local::blocking::Client, Rocket};
-    use store::Landing;
     use std::{
         fs,
         process::{Child, Command},
         thread,
         time::{Duration, Instant},
     };
+    use store::Landing;
 
     use crate::{Channel, LandedIn};
 
@@ -179,14 +179,18 @@ mod test {
     #[test]
     fn pr_landed_in_master() {
         let ctx = TestContext::init();
-        let landing = Landing
+        let landing = Landing {
+            github_pr: 2134,
+            channel: "nixos-unstable".to_string(),
+        };
+        landing.insert();
         let client = Client::tracked(ctx.rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(
             response.into_json::<LandedIn>().unwrap(),
             LandedIn {
-                channels: vec![Channel("master".to_owned())]
+                channels: vec![Channel("nixos-unstable".to_owned())]
             }
         );
     }
