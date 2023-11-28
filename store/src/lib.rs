@@ -10,6 +10,7 @@ impl Landing {
     pub const TABLE: &str = "landings";
 
     pub fn insert(self, db: impl Connection) -> Result<()> {
-        sqlx::query!("insert")
+        todo!()
+        //sqlx::query!("insert")
     }
 }

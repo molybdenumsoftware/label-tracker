@@ -15,7 +15,7 @@ use rocket_db_pools::{
     Connection, Database,
 };
 
-#[derive(Database)]
+#[derive(Database, Debug)]
 #[database("data")]
 struct Data(sqlx::Pool<sqlx::Postgres>);
 
@@ -73,6 +73,7 @@ fn rocket() -> _ {
 mod test {
     use camino::{Utf8Path, Utf8PathBuf};
     use rocket::{figment::Figment, http::Status, local::blocking::Client, Rocket};
+    use rocket_db_pools::Connection;
     use std::{
         fs,
         process::{Child, Command},
@@ -81,15 +82,11 @@ mod test {
     };
     use store::Landing;
 
-    use crate::{Channel, LandedIn};
+    use crate::{Channel, LandedIn, Data};
 
-    // IDEA: return a struct that implements drop and kills db when dropped, this means when test exits db is killd (even on panic)
-
-    // If we want to share between tests -> RC
     struct TestContext {
         tmp_dir: tempfile::TempDir,
         postgres: Child,
-        // have function that returns something
     }
 
     impl Drop for TestContext {
@@ -183,9 +180,11 @@ mod test {
             github_pr: 2134,
             channel: "nixos-unstable".to_string(),
         };
-        landing.insert();
+        //landing.insert();
         let rocket = ctx.rocket();
-        rocket.
+        let state: &Connection<Data> = rocket.state().unwrap();
+        dbg!(&state.server_version_num().unwrap());
+
         let client = Client::tracked(rocket).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         assert_eq!(response.status(), Status::Ok);
