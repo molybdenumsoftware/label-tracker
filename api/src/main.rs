@@ -73,7 +73,7 @@ fn rocket() -> _ {
 mod test {
     use camino::{Utf8Path, Utf8PathBuf};
     use rocket::{figment::Figment, http::Status, local::blocking::Client, Rocket};
-    use rocket_db_pools::Connection;
+    use sqlx::Connection;
     use std::{
         fs,
         process::{Child, Command},
@@ -164,7 +164,7 @@ mod test {
         }
 
         fn connection(&self) -> impl Connection {
-            todo!()
+            todo!();
         }
     }
 
