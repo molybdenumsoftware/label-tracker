@@ -184,7 +184,9 @@ mod test {
             channel: "nixos-unstable".to_string(),
         };
         landing.insert();
-        let client = Client::tracked(ctx.rocket()).unwrap();
+        let rocket = ctx.rocket();
+        rocket.
+        let client = Client::tracked(rocket).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(
