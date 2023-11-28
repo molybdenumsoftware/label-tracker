@@ -82,7 +82,7 @@ mod test {
     };
     use store::Landing;
 
-    use crate::{Channel, LandedIn, Data};
+    use crate::{Channel, Data, LandedIn};
 
     struct TestContext {
         tmp_dir: tempfile::TempDir,
@@ -162,6 +162,10 @@ mod test {
                 Self::PORT,
             )
         }
+
+        fn connection(&self) -> impl Connection {
+            todo!()
+        }
     }
 
     #[test]
@@ -176,16 +180,16 @@ mod test {
     #[test]
     fn pr_landed_in_master() {
         let ctx = TestContext::init();
+        let connection = ctx.connection().unwrap();
+
         let landing = Landing {
             github_pr: 2134,
             channel: "nixos-unstable".to_string(),
         };
-        //landing.insert();
-        let rocket = ctx.rocket();
-        let state: &Connection<Data> = rocket.state().unwrap();
-        dbg!(&state.server_version_num().unwrap());
 
-        let client = Client::tracked(rocket).unwrap();
+        landing.insert(&connection).unwrap();
+
+        let client = Client::tracked(ctx.rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(

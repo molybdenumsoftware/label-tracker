@@ -13,4 +13,5 @@ sqlx= { version = "0.7", default-features = false, features = ["macros", "migrat
 store = { version = "0.1.0", path = "../store" }
 
 [dev-dependencies]
+sqlx = "0.7"
 tempfile = "3.8.1"
