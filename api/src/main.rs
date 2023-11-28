@@ -73,7 +73,7 @@ fn rocket() -> _ {
 mod test {
     use camino::{Utf8Path, Utf8PathBuf};
     use rocket::{figment::Figment, http::Status, local::blocking::Client, Rocket};
-    use sqlx::Connection;
+    use sqlx::{Connection, PgConnection};
     use std::{
         fs,
         process::{Child, Command},
@@ -163,8 +163,9 @@ mod test {
             )
         }
 
-        fn connection(&self) -> impl Connection {
-            todo!();
+        async fn connection(&self) -> Result<PgConnection, sqlx::Error> {
+            let url = self.db_url();
+            sqlx::PgConnection::connect(&url).await
         }
     }
 
@@ -177,10 +178,10 @@ mod test {
         assert_eq!(response.into_string(), Some("PR not found".into()));
     }
 
-    #[test]
+    #[tokio::test]
     fn pr_landed_in_master() {
         let ctx = TestContext::init();
-        let connection = ctx.connection().unwrap();
+        let connection = ctx.connection().await.unwrap();
 
         let landing = Landing {
             github_pr: 2134,
