@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use sqlx::{migrate::Migrate, Acquire, Connection, Database, FromRow, Postgres, Transaction};
+use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgres, Transaction};
 
 pub mod server {}
 
@@ -23,29 +23,33 @@ impl Landing {
 
     pub async fn insert(
         self,
-        mut connection: impl sqlx::PgExecutor<'_> + Connection,
+        connection: &mut PgConnection,
+        //<<< mut connection: impl sqlx::PgExecutor<'_> + Connection,
     ) -> sqlx::Result<()> {
         async fn transaction(
             txn: &mut Transaction<'_, Postgres>,
             landing: Landing,
-        ) -> Result<_, _> {
+        ) -> sqlx::Result<()> {
             sqlx::query!(
                 "INSERT INTO github_prs(number) VALUES ($1)",
                 landing.github_pr_number
             )
-            .execute(transaction)
+            .execute(&mut **txn)
             .await?;
+
             sqlx::query!(
                 "INSERT INTO landings(github_pr_number, channel) VALUES ($1, $2)",
                 landing.github_pr_number,
                 landing.channel
             )
-            .execute(connection)
+            .execute(&mut **txn)
             .await?;
+
+            Ok(())
         }
 
         connection
-            .transaction(|txn| async move { transaction(self) })
+            .transaction(|txn| async move { transaction(txn, self) })
             .await?;
         Ok(())
         // .unwrap();
