@@ -35,7 +35,17 @@
 
       apps.sqlx-prepare = {
         type = "app";
-        program = ;
+        program =
+          (pkgs.writeShellApplication {
+            name = "sqlx-prepare";
+            runtimeInputs = with pkgs; [sqlx-cli];
+            text = ''
+              cargo sqlx prepare --workspace --database-url '<<<TODO>>>'
+              echo "hello, world"
+            '';
+          })
+          .outPath
+          + "/bin/sqlx-prepare";
       };
 
       checks =
