@@ -117,7 +117,7 @@ mod test {
         let mut connection = ctx.connection().await.unwrap();
 
         let landing = Landing {
-            github_pr: 2134,
+            github_pr_number: 2134,
             channel: "nixos-unstable".to_string(),
         };
 
