@@ -15,7 +15,7 @@ impl Landing {
         // TODO: this isn't gonna compile until we have a running database for sqlx to talk to at
         // build time.
         sqlx::query!(
-            "INSERT INTO landings(github_pr, channel) VALUES (?, ?)",
+            "INSERT INTO landings(github_pr, channel) VALUES ($1, $2)",
             self.github_pr,
             self.channel
         )
