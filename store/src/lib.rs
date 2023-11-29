@@ -1,12 +1,12 @@
 use std::ops::Deref;
 
-use sqlx::{migrate::Migrate, Acquire, FromRow};
+use sqlx::{migrate::Migrate, Acquire, FromRow, Connection};
 
 pub mod server {}
 
 #[derive(FromRow)]
 pub struct Landing {
-    pub github_pr: i32,
+    pub github_pr_number: i32,
     pub channel: String,
 }
 
@@ -21,16 +21,20 @@ where
 impl Landing {
     pub const TABLE: &str = "landings";
 
-    pub async fn insert(self, connection: impl sqlx::PgExecutor<'_>) -> sqlx::Result<()> {
-        // TODO: this isn't gonna compile until we have a running database for sqlx to talk to at
-        // build time.
+    pub async fn insert(self, mut connection: impl sqlx::PgExecutor<'_> + Connection) -> sqlx::Result<()> {
+        connection.transaction(|txn| async move {
+        sqlx::query!("INSERT INTO github_prs(number) VALUES ($1)", self.github_pr_number)
+            .execute(transaction)
+            .await?;
         sqlx::query!(
-            "INSERT INTO landings(github_pr, channel) VALUES ($1, $2)",
-            self.github_pr,
+            "INSERT INTO landings(github_pr_number, channel) VALUES ($1, $2)",
+            self.github_pr_number,
             self.channel
         )
         .execute(connection)
         .await?;
+            
+        }).await?;
         Ok(())
         // .unwrap();
         //sqlx::query!("insert")
