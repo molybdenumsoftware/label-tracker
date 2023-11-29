@@ -10,6 +10,6 @@ fn main() {
         .status()
         .unwrap();
 
-    assert!(status.is_successful());
+    assert!(status.success());
     println!("hello, world")
 }
