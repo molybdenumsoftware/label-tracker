@@ -1,6 +1,11 @@
-use std::process::Child;
+use std::{
+    process::{Child, Command},
+    time::{Duration, Instant},
+};
 
-struct DatabaseContext {
+use camino::{Utf8Path, Utf8PathBuf};
+
+pub struct DatabaseContext {
     tmp_dir: tempfile::TempDir,
     postgres: Child,
 }
@@ -13,19 +18,19 @@ impl Drop for DatabaseContext {
 }
 
 impl DatabaseContext {
-    // Note: postgres isn't actually going to listen on this port (see the empty
-    // listen_addresses down below), this just determines the name of the socket it listens to.
+    // Will not be used as port, but as part of socket filename.
+    // See `listen_addresses` below.
     const PORT: &str = "1";
 
     fn sockets_dir(path: &Utf8Path) -> Utf8PathBuf {
         path.join("sockets")
     }
 
-    fn init() -> Self {
+    pub fn init() -> Self {
         let tmp_dir = tempfile::tempdir().unwrap();
         let sockets_dir = Self::sockets_dir(tmp_dir.path().try_into().unwrap());
         let data_dir = tmp_dir.path().join("data");
-        fs::create_dir(&sockets_dir).unwrap();
+        std::fs::create_dir(&sockets_dir).unwrap();
 
         assert!(Command::new("initdb")
             .arg(&data_dir)
@@ -47,20 +52,20 @@ impl DatabaseContext {
 
         let socket_path = sockets_dir.join(format!(".s.PGSQL.{}", Self::PORT));
 
-        let n = Instant::now();
+        let started = Instant::now();
 
         while !socket_path.exists() {
             assert!(
-                n.elapsed() < Duration::from_secs(5),
+                started.elapsed() < Duration::from_secs(5),
                 "db should start within 5 seconds"
             );
-            thread::sleep(Duration::from_millis(10));
+            std::thread::sleep(Duration::from_millis(10));
         }
 
         Self { tmp_dir, postgres }
     }
 
-    fn db_url(&self) -> String {
+    pub fn db_url(&self) -> String {
         let dbname = "postgres"; // TODO
 
         format!(
