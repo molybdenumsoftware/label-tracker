@@ -44,7 +44,7 @@ impl From<sqlx::Error> for LandedError {
 
 #[get("/landed/github/<pr>")]
 async fn landed(mut db: Connection<Data>, pr: &str) -> Result<Json<LandedIn>, LandedError> {
-    let rows = sqlx::query("SELECT 'master' as channel")
+    let rows = sqlx::query("SELECT channel from landings where github_pr_number = $1").bind(pr)
         .fetch_all(&mut **db)
         .await?;
 

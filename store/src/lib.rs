@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use futures::FutureExt;
 use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgres, Transaction};
 
 pub mod server {}
@@ -49,7 +50,7 @@ impl Landing {
         }
 
         connection
-            .transaction(|txn| async move { transaction(txn, self) })
+            .transaction(|txn| transaction(txn, self).boxed())
             .await?;
         Ok(())
         // .unwrap();
