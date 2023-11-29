@@ -1,5 +1,5 @@
 [workspace]
-members = ["fetcher", "api", "store"]
+members = ["fetcher", "api", "store", "util"]
 
 [package]
 name = "label-tracker"
