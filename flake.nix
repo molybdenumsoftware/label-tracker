@@ -27,6 +27,23 @@
   in
     combine (pkgs: let
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+
+      util =
+        pkgs.rustPlatform.buildRustPackage
+        {
+          pname = "sqlx-prepare";
+          version = "0.1.0";
+          runtimeInputs = with pkgs; [sqlx-cli];
+          src = ./.;
+          cargoLock.lockFile = ./Cargo.lock;
+          buildAndTestSubdir = "util";
+
+          #<<< text = ''
+          #<<<   cargo run --package util --bin
+          #<<<   cargo sqlx prepare --workspace --database-url '<<<TODO>>>'
+          #<<<   echo "hello, world"
+          #<<< '';
+        };
     in rec {
       packages = rec {
         label-tracker = pkgs.callPackage ./label-tracker.nix {};
