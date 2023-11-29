@@ -6,7 +6,6 @@ extern crate rocket;
 
 use rocket::{
     fairing::AdHoc,
-    http::Status,
     serde::{json::Json, Deserialize, Serialize},
 };
 
@@ -38,7 +37,7 @@ enum LandedError {
 }
 
 impl From<sqlx::Error> for LandedError {
-    fn from(value: sqlx::Error) -> Self {
+    fn from(_value: sqlx::Error) -> Self {
         Self::Db(())
     }
 }
@@ -91,24 +90,14 @@ mod test {
         fn rocket(&self) -> Rocket<rocket::Build> {
             rocket::custom(
                 Figment::from(rocket::Config::default())
-                    .merge(("databases.data.url", self.db_url()))
+                    .merge(("databases.data.url", self.database_ctx.db_url()))
                     .merge(("log_level", rocket::config::LogLevel::Debug)),
             )
             .attach(super::app())
         }
 
-        fn db_url(&self) -> String {
-            let dbname = "postgres"; // TODO
-
-            format!(
-                "postgresql:///{dbname}?host={}&port={}",
-                Self::sockets_dir(self.tmp_dir.path().try_into().unwrap()),
-                Self::PORT,
-            )
-        }
-
         async fn connection(&self) -> Result<PgConnection, sqlx::Error> {
-            let url = self.db_url();
+            let url = self.database_ctx.db_url();
             sqlx::PgConnection::connect(&url).await
         }
     }
@@ -123,7 +112,7 @@ mod test {
     }
 
     #[tokio::test]
-    fn pr_landed_in_master() {
+    async fn pr_landed_in_master() {
         let ctx = TestContext::init();
         let connection = ctx.connection().await.unwrap();
 
@@ -132,7 +121,7 @@ mod test {
             channel: "nixos-unstable".to_string(),
         };
 
-        landing.insert(&connection).unwrap();
+        landing.insert(connection).await.unwrap();
 
         let client = Client::tracked(ctx.rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
