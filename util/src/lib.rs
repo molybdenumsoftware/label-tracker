@@ -4,6 +4,7 @@ use std::{
 };
 
 use camino::{Utf8Path, Utf8PathBuf};
+use sqlx::{Connection, PgConnection};
 
 pub struct DatabaseContext {
     tmp_dir: tempfile::TempDir,
@@ -26,7 +27,12 @@ impl DatabaseContext {
         path.join("sockets")
     }
 
-    pub fn init() -> Self {
+    async fn connection(&self) -> Result<PgConnection, sqlx::Error> {
+        let url = self.db_url();
+        sqlx::PgConnection::connect(&url).await
+    }
+
+    pub async fn init() -> Self {
         let tmp_dir = tempfile::tempdir().unwrap();
         let sockets_dir = Self::sockets_dir(tmp_dir.path().try_into().unwrap());
         let data_dir = tmp_dir.path().join("data");
@@ -62,7 +68,12 @@ impl DatabaseContext {
             std::thread::sleep(Duration::from_millis(10));
         }
 
-        Self { tmp_dir, postgres }
+        let this = Self { tmp_dir, postgres };
+        sqlx::migrate!("../store/migrations")
+            .run(this.connection())
+            .await;
+
+        this
     }
 
     pub fn db_url(&self) -> String {

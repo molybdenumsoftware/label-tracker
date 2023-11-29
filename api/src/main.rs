@@ -95,11 +95,6 @@ mod test {
             )
             .attach(super::app())
         }
-
-        async fn connection(&self) -> Result<PgConnection, sqlx::Error> {
-            let url = self.database_ctx.db_url();
-            sqlx::PgConnection::connect(&url).await
-        }
     }
 
     #[test]

@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 camino = "1.1.6"
+sqlx = { version = "0.7.3", features = ["postgres"] }
 tempfile = "3.8.1"
