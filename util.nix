@@ -22,15 +22,15 @@ rustPlatform.buildRustPackage
   pname = "sqlx-prepare";
   version = "0.1.0";
   runtimeInputs = [sqlx-cli];
-  #<<< src = ./.;
-  src = fileset.toSource {
-    root = ./.;
-    fileset = fileset.unions [
-      ./util
-      ./Cargo.lock
-      ./Cargo.toml
-    ];
-  };
+  src = ./.;
+  # src = fileset.toSource {
+  #   root = ./.;
+  #   fileset = fileset.unions [
+  #     ./util
+  #     ./Cargo.lock
+  #     ./Cargo.toml
+  #   ];
+  # };
   cargoLock.lockFile = ./Cargo.lock;
   buildAndTestSubdir = "util";
 
