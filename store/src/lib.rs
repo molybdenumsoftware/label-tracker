@@ -30,9 +30,9 @@ impl Landing {
             self.channel
         )
         .execute(connection)
-        .await
-        .unwrap();
-        todo!()
+        .await?;
+        Ok(())
+        // .unwrap();
         //sqlx::query!("insert")
     }
 }

@@ -88,7 +88,7 @@ mod test {
         }
 
         async fn connection(&self) -> Result<PgConnection, sqlx::Error> {
-            let url = self.db_url();
+            let url = self.database_ctx.db_url();
             sqlx::PgConnection::connect(&url).await
         }
 
@@ -103,7 +103,7 @@ mod test {
     }
 
     #[tokio::test]
-    fn pr_not_found() {
+    async fn pr_not_found() {
         let ctx = TestContext::init().await;
         let client = Client::tracked(ctx.rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
@@ -114,14 +114,14 @@ mod test {
     #[tokio::test]
     async fn pr_landed_in_master() {
         let ctx = TestContext::init().await;
-        let connection = ctx.connection().await.unwrap();
+        let mut connection = ctx.connection().await.unwrap();
 
         let landing = Landing {
             github_pr: 2134,
             channel: "nixos-unstable".to_string(),
         };
 
-        landing.insert(connection).await.unwrap();
+        landing.insert(&mut connection).await.unwrap();
 
         let client = Client::tracked(ctx.rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
