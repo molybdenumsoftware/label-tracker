@@ -1,10 +1,8 @@
-use std::{
-    process::{Child, Command},
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
+use std::process::{Child, Command};
 
 use camino::{Utf8Path, Utf8PathBuf};
-use sqlx::{Connection, PgConnection};
+use sqlx::{Connection, PgConnection, PgPool};
 
 pub struct DatabaseContext {
     tmp_dir: tempfile::TempDir,
@@ -13,6 +11,7 @@ pub struct DatabaseContext {
 
 impl Drop for DatabaseContext {
     fn drop(&mut self) {
+        tokio::block_on;
         self.postgres.kill().unwrap();
         self.postgres.wait().unwrap();
     }
@@ -32,6 +31,11 @@ impl DatabaseContext {
         sqlx::PgConnection::connect(&url).await
     }
 
+    async fn pool(&self) -> Result<PgPool, sqlx::Error> {
+        let url = self.db_url();
+        sqlx::PgPool::connect(&url).await
+    }
+
     pub async fn init() -> Self {
         let tmp_dir = tempfile::tempdir().unwrap();
         let sockets_dir = Self::sockets_dir(tmp_dir.path().try_into().unwrap());
@@ -41,6 +45,7 @@ impl DatabaseContext {
         assert!(Command::new("initdb")
             .arg(&data_dir)
             .status()
+            // .await
             .unwrap()
             .success());
 
@@ -70,7 +75,7 @@ impl DatabaseContext {
 
         let this = Self { tmp_dir, postgres };
         sqlx::migrate!("../store/migrations")
-            .run(this.connection())
+            .run(&this.pool().await.unwrap())
             .await;
 
         this
