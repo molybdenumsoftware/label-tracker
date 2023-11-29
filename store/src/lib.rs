@@ -1,4 +1,6 @@
-use sqlx::{Connection, FromRow};
+use std::ops::Deref;
+
+use sqlx::{migrate::Migrate, Acquire, Connection, FromRow};
 
 pub mod server {}
 
@@ -8,7 +10,11 @@ pub struct Landing {
     pub channel: String,
 }
 
-pub async fn migrate(connection: impl Connection) -> Result<(), sqlx::migrate::MigrateError> {
+pub async fn migrate<'a, A>(connection: A) -> Result<(), sqlx::migrate::MigrateError>
+where
+    A: Acquire<'a>,
+    <A::Connection as Deref>::Target: Migrate,
+{
     sqlx::migrate!("./migrations").run(connection).await
 }
 
