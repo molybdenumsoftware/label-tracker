@@ -1,4 +1,4 @@
-use sqlx::{Connection, FromRow, Result};
+use sqlx::{Connection, FromRow};
 
 pub mod server {}
 
@@ -8,10 +8,14 @@ pub struct Landing {
     pub channel: String,
 }
 
+pub async fn migrate(connection: impl Connection) -> Result<(), sqlx::migrate::MigrateError> {
+    sqlx::migrate!("./migrations").run(connection).await
+}
+
 impl Landing {
     pub const TABLE: &str = "landings";
 
-    pub async fn insert(self, connection: impl Connection) -> Result<()> {
+    pub async fn insert(self, connection: impl Connection) -> sqlx::Result<()> {
         // TODO: this isn't gonna compile until we have a running database for sqlx to talk to at
         // build time.
         sqlx::query!(
