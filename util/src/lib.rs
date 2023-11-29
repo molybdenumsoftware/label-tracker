@@ -56,7 +56,6 @@ impl DatabaseContext {
             .unwrap();
 
         let socket_path = sockets_dir.join(format!(".s.PGSQL.{}", Self::PORT));
-
         let started = Instant::now();
 
         while !socket_path.exists() {
@@ -68,10 +67,12 @@ impl DatabaseContext {
         }
 
         let this = Self { tmp_dir, postgres };
+
         sqlx::migrate!("../store/migrations")
             .run(&this.pool().await.unwrap())
             .await
             .unwrap();
+
         this
     }
 

@@ -19,8 +19,20 @@ where
     sqlx::migrate!("./migrations").run(connection).await
 }
 
+enum ForPrError {
+    Sqlx(sqlx::Error),
+    PrNotFound(u64),
+}
+
 impl Landing {
     pub const TABLE: &str = "landings";
+
+    pub async fn for_pr(pr: u64) -> Result<Vec<Landing>, ForPrError> {
+        let rows = sqlx::query!("SELECT channel from landings where github_pr_number = $1")
+            .bind(pr)
+            .fetch_all(&mut **db)
+            .await?;
+    }
 
     pub async fn insert(
         self,

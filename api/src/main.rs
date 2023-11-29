@@ -13,6 +13,7 @@ use rocket_db_pools::{
     sqlx::{self, Row},
     Connection, Database,
 };
+use store::Landing;
 
 #[derive(Database, Debug)]
 #[database("data")]
@@ -43,10 +44,8 @@ impl From<sqlx::Error> for LandedError {
 }
 
 #[get("/landed/github/<pr>")]
-async fn landed(mut db: Connection<Data>, pr: &str) -> Result<Json<LandedIn>, LandedError> {
-    let rows = sqlx::query("SELECT channel from landings where github_pr_number = $1").bind(pr)
-        .fetch_all(&mut **db)
-        .await?;
+async fn landed(mut db: Connection<Data>, pr: u64) -> Result<Json<LandedIn>, LandedError> {
+    let landings = Landing::for_pr(pr).await?;
 
     let channels = rows
         .into_iter()
