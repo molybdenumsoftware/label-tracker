@@ -13,7 +13,7 @@
     inherit
       (nixpkgs.lib)
       attrValues
-      getExe'
+      getExe
       pipe
       ;
 
@@ -27,7 +27,7 @@
   in
     combine (pkgs: let
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
-      util = pkgs.callPackage ./util.nix {};
+      util = bin: pkgs.writeShellScriptBin "util-${bin}" "cargo run --package util --bin ${bin}";
     in rec {
       packages = rec {
         label-tracker = pkgs.callPackage ./label-tracker.nix {};
@@ -43,7 +43,7 @@
 
       apps.sqlx-prepare = {
         type = "app";
-        program = getExe' util "sqlx-prepare";
+        program = pipe "sqlx-prepare" [util getExe];
       };
 
       checks =
