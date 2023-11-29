@@ -72,7 +72,6 @@ impl DatabaseContext {
             .run(&this.pool().await.unwrap())
             .await
             .unwrap();
-
         this
     }
 
