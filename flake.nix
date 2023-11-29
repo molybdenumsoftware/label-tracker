@@ -10,6 +10,13 @@
     nixpkgs,
     treefmt-nix,
   }: let
+    inherit
+      (nixpkgs.lib)
+      attrValues
+      getExe
+      pipe
+      ;
+
     systems = {"x86_64-linux" = {};};
     combine = fn:
       with builtins; let
@@ -28,7 +35,7 @@
       };
 
       devShells.default = pkgs.mkShell {
-        inputsFrom = pkgs.lib.attrsets.attrValues packages;
+        inputsFrom = attrValues packages;
         packages = with pkgs; [rustfmt rust-analyzer clippy sqlx-cli];
         SQLX_OFFLINE = "true";
       };
@@ -36,16 +43,17 @@
       apps.sqlx-prepare = {
         type = "app";
         program =
-          (pkgs.writeShellApplication {
+          pipe {
             name = "sqlx-prepare";
             runtimeInputs = with pkgs; [sqlx-cli];
             text = ''
               cargo sqlx prepare --workspace --database-url '<<<TODO>>>'
               echo "hello, world"
             '';
-          })
-          .outPath
-          + "/bin/sqlx-prepare";
+          } [
+            pkgs.writeShellApplication
+            getExe
+          ];
       };
 
       checks =

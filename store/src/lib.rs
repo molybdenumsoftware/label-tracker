@@ -1,5 +1,7 @@
 use sqlx::{Connection, FromRow, Result};
 
+pub mod server {}
+
 #[derive(FromRow)]
 pub struct Landing {
     pub github_pr: u64,
