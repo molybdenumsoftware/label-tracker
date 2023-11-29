@@ -71,77 +71,21 @@ fn rocket() -> _ {
 
 #[cfg(test)]
 mod test {
-    use camino::{Utf8Path, Utf8PathBuf};
     use rocket::{figment::Figment, http::Status, local::blocking::Client, Rocket};
     use sqlx::{Connection, PgConnection};
-    use std::{
-        fs,
-        process::{Child, Command},
-        thread,
-        time::{Duration, Instant},
-    };
     use store::Landing;
+    use util::DatabaseContext;
 
-    use crate::{Channel, Data, LandedIn};
+    use crate::{Channel, LandedIn};
 
     struct TestContext {
-        tmp_dir: tempfile::TempDir,
-        postgres: Child,
-    }
-
-    impl Drop for TestContext {
-        fn drop(&mut self) {
-            self.postgres.kill().unwrap();
-            self.postgres.wait().unwrap();
-        }
+        database_ctx: DatabaseContext,
     }
 
     impl TestContext {
-        // Note: postgres isn't actually going to listen on this port (see the empty
-        // listen_addresses down below), this just determines the name of the socket it listens to.
-        const PORT: &str = "1";
-
-        fn sockets_dir(path: &Utf8Path) -> Utf8PathBuf {
-            path.join("sockets")
-        }
-
         fn init() -> Self {
-            let tmp_dir = tempfile::tempdir().unwrap();
-            let sockets_dir = Self::sockets_dir(tmp_dir.path().try_into().unwrap());
-            let data_dir = tmp_dir.path().join("data");
-            fs::create_dir(&sockets_dir).unwrap();
-
-            assert!(Command::new("initdb")
-                .arg(&data_dir)
-                .status()
-                .unwrap()
-                .success());
-
-            let postgres = Command::new("postgres")
-                .arg("-D")
-                .arg(data_dir)
-                .arg("-p")
-                .arg(Self::PORT)
-                .arg("-c")
-                .arg(format!("unix_socket_directories={sockets_dir}"))
-                .arg("-c")
-                .arg("listen_addresses=")
-                .spawn()
-                .unwrap();
-
-            let socket_path = sockets_dir.join(format!(".s.PGSQL.{}", Self::PORT));
-
-            let n = Instant::now();
-
-            while !socket_path.exists() {
-                assert!(
-                    n.elapsed() < Duration::from_secs(5),
-                    "db should start within 5 seconds"
-                );
-                thread::sleep(Duration::from_millis(10));
-            }
-
-            Self { tmp_dir, postgres }
+            let database_ctx = DatabaseContext::init();
+            Self { database_ctx }
         }
 
         fn rocket(&self) -> Rocket<rocket::Build> {
