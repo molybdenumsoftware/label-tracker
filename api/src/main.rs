@@ -70,7 +70,7 @@ fn rocket() -> _ {
 
 #[cfg(test)]
 mod test {
-    use rocket::{figment::Figment, http::Status, local::blocking::Client, Rocket};
+    use rocket::{figment::Figment, http::Status, local::asynchronous::Client, Rocket};
     use sqlx::{Connection, PgConnection};
     use store::Landing;
     use util::DatabaseContext;
@@ -105,10 +105,10 @@ mod test {
     #[tokio::test]
     async fn pr_not_found() {
         let ctx = TestContext::init().await;
-        let client = Client::tracked(ctx.rocket()).unwrap();
-        let response = client.get("/landed/github/2134").dispatch();
+        let client = Client::tracked(ctx.rocket()).await.unwrap();
+        let response = client.get("/landed/github/2134").dispatch().await;
         assert_eq!(response.status(), Status::NotFound);
-        assert_eq!(response.into_string(), Some("PR not found".into()));
+        assert_eq!(response.into_string().await, Some("PR not found".into()));
     }
 
     #[tokio::test]
@@ -123,11 +123,11 @@ mod test {
 
         landing.insert(&mut connection).await.unwrap();
 
-        let client = Client::tracked(ctx.rocket()).unwrap();
-        let response = client.get("/landed/github/2134").dispatch();
+        let client = Client::tracked(ctx.rocket()).await.unwrap();
+        let response = client.get("/landed/github/2134").dispatch().await;
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(
-            response.into_json::<LandedIn>().unwrap(),
+            response.into_json::<LandedIn>().await.unwrap(),
             LandedIn {
                 channels: vec![Channel("nixos-unstable".to_owned())]
             }
