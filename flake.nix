@@ -44,14 +44,18 @@
         type = "app";
         program =
           pipe {
-            name = "sqlx-prepare";
+            pname = "sqlx-prepare";
             runtimeInputs = with pkgs; [sqlx-cli];
+            src = ./.;
+            cargoLock.lockFile = ./Cargo.lock;
+
             text = ''
+              cargo run --package util --bin
               cargo sqlx prepare --workspace --database-url '<<<TODO>>>'
               echo "hello, world"
             '';
           } [
-            pkgs.writeShellApplication
+            pkgs.rustPlatform.builtRustPackage
             getExe
           ];
       };
