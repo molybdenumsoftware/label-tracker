@@ -1,12 +1,13 @@
 use std::process::Command;
 use util::DatabaseContext;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let database_ctx = DatabaseContext::init();
 
     let status = Command::new("cargo")
         .args(["sqlx", "prepare", "--database-url"])
-        .arg(database_ctx.db_url())
+        .arg(database_ctx.await.db_url())
         .current_dir("store")
         .status()
         .unwrap();

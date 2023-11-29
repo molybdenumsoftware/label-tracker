@@ -82,9 +82,14 @@ mod test {
     }
 
     impl TestContext {
-        fn init() -> Self {
-            let database_ctx = DatabaseContext::init();
+        async fn init() -> Self {
+            let database_ctx = DatabaseContext::init().await;
             Self { database_ctx }
+        }
+
+        async fn connection(&self) -> Result<PgConnection, sqlx::Error> {
+            let url = self.db_url();
+            sqlx::PgConnection::connect(&url).await
         }
 
         fn rocket(&self) -> Rocket<rocket::Build> {
@@ -97,9 +102,9 @@ mod test {
         }
     }
 
-    #[test]
+    #[tokio::test]
     fn pr_not_found() {
-        let ctx = TestContext::init();
+        let ctx = TestContext::init().await;
         let client = Client::tracked(ctx.rocket()).unwrap();
         let response = client.get("/landed/github/2134").dispatch();
         assert_eq!(response.status(), Status::NotFound);
@@ -108,7 +113,7 @@ mod test {
 
     #[tokio::test]
     async fn pr_landed_in_master() {
-        let ctx = TestContext::init();
+        let ctx = TestContext::init().await;
         let connection = ctx.connection().await.unwrap();
 
         let landing = Landing {
