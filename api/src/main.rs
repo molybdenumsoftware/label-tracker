@@ -81,7 +81,7 @@ async fn landed(mut db: Connection<Data>, pr: u32) -> Result<Json<LandedIn>, Lan
 
     let channels = landings
         .into_iter()
-        .map(|landing| Channel::new(landing.channel.as_str()))
+        .map(|channel| Channel::new(channel.as_str()))
         .collect();
 
     Ok(Json(LandedIn { channels }))

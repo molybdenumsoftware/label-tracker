@@ -82,9 +82,12 @@ impl Landing {
         .fetch_all(connection)
         .await?;
 
-        let landings = records.into_iter().map(|record| record.channel).collect();
+        let channels = records
+            .into_iter()
+            .map(|record| Channel::new(record.channel))
+            .collect();
 
-        Ok(records)
+        Ok(channels)
     }
 
     pub async fn insert(
