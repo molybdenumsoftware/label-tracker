@@ -4,7 +4,10 @@ use std::{
 };
 
 use futures::FutureExt;
-use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgres, Transaction};
+use sqlx::{
+    migrate::Migrate, postgres::PgTypeInfo, Acquire, Connection, FromRow, PgConnection, Postgres,
+    Transaction,
+};
 
 pub mod server {}
 
@@ -21,7 +24,7 @@ impl<'q> sqlx::Encode<'q, Postgres> for PrNumber {
 
 impl sqlx::Type<Postgres> for PrNumber {
     fn type_info() -> <Postgres as sqlx::Database>::TypeInfo {
-        todo!()
+        <i32 as sqlx::Type<Postgres>>::type_info()
     }
 }
 
