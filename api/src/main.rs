@@ -4,6 +4,8 @@
 #[macro_use]
 extern crate rocket;
 
+use std::ops::DerefMut;
+
 use rocket::{
     fairing::AdHoc,
     serde::{json::Json, Deserialize, Serialize},
@@ -46,7 +48,7 @@ impl From<sqlx::Error> for LandedError {
 
 #[get("/landed/github/<pr>")]
 async fn landed(mut db: Connection<Data>, pr: u64) -> Result<Json<LandedIn>, LandedError> {
-    let landings = Landing::for_pr(db, pr).await?;
+    let landings = Landing::for_pr(db.deref_mut(), pr).await?;
 
     let channels = rows
         .into_iter()
