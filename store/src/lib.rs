@@ -27,11 +27,17 @@ enum ForPrError {
 impl Landing {
     pub const TABLE: &str = "landings";
 
-    pub async fn for_pr(pr: u64) -> Result<Vec<Landing>, ForPrError> {
-        let rows = sqlx::query!("SELECT channel from landings where github_pr_number = $1")
-            .bind(pr)
-            .fetch_all(&mut **db)
-            .await?;
+    pub async fn for_pr(
+        connection: &mut PgConnection,
+        pr: PrNumber,
+    ) -> Result<Vec<Landing>, ForPrError> {
+        let rows = sqlx::query!(
+            "SELECT channel from landings where github_pr_number = $1",
+            pr.into()
+        )
+        .fetch_all(connection)
+        .await?;
+        todo!()
     }
 
     pub async fn insert(
