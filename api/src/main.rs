@@ -16,7 +16,7 @@ use rocket_db_pools::{
     Connection, Database,
 };
 use sqlx::PgConnection;
-use store::Landing;
+use store::{Landing, PrNumberTooLarge};
 
 #[derive(Database, Debug)]
 #[database("data")]
@@ -36,6 +36,8 @@ struct LandedIn {
 enum LandedError {
     #[response(status = 404)]
     PrNotFound(()),
+    #[response(status = 400)]
+    PrNumberTooLarge(PrNumberTooLarge),
     #[response(status = 500)]
     Db(()),
 }
@@ -46,9 +48,15 @@ impl From<sqlx::Error> for LandedError {
     }
 }
 
+impl From<PrNumberTooLarge> for LandedError {
+    fn from(value: PrNumberTooLarge) -> Self {
+        Self::PrNumberTooLarge(value)
+    }
+}
+
 #[get("/landed/github/<pr>")]
-async fn landed(mut db: Connection<Data>, pr: u64) -> Result<Json<LandedIn>, LandedError> {
-    let landings = Landing::for_pr(&mut *db, pr).await?;
+async fn landed(mut db: Connection<Data>, pr: u32) -> Result<Json<LandedIn>, LandedError> {
+    let landings = Landing::for_pr(&mut *db, pr.try_into()?).await?;
 
     let channels = rows
         .into_iter()
