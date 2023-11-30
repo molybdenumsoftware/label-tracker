@@ -5,15 +5,20 @@ use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgre
 
 pub mod server {}
 
-pub struct PrNumber(u32);
+pub struct PrNumber(i32);
+
+struct PrNumberTooLarge();
 
 impl PrNumber {
-    pub fn new(number: u32) -
+    pub fn new(number: u32) -> Result<Self, PrNumberTooLarge> {
+        let number = number.try_into()?;
+        Self(number)
+    }
 }
 
 impl From<PrNumber> for i32 {
     fn from(value: PrNumber) -> Self {
-        value.0.try_into().unwrap()
+        value.0
     }
 }
 
