@@ -60,22 +60,31 @@ pub enum ForPrError {
     PrNotFound(u64),
 }
 
+impl From<sqlx::Error> for ForPrError {
+    fn from(value: sqlx::Error) -> Self {
+        Self::Sqlx(value)
+    }
+}
+
 impl Landing {
     pub const TABLE: &str = "landings";
 
     pub async fn for_pr(
         connection: &mut PgConnection,
         pr: PrNumber,
-    ) -> Result<Vec<Landing>, ForPrError> {
+    ) -> Result<Vec<Channel>, ForPrError> {
         let pr_num: i32 = pr.into();
 
-        let foo = sqlx::query!(
+        let records = sqlx::query!(
             "SELECT channel from landings where github_pr_number = $1",
             pr_num,
         )
         .fetch_all(connection)
         .await?;
-        Ok(foo)
+
+        let landings = records.into_iter().map(|record| record.channel).collect();
+
+        Ok(records)
     }
 
     pub async fn insert(
