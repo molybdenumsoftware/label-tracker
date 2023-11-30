@@ -13,21 +13,6 @@ pub mod server {}
 
 pub struct PrNumber(i32);
 
-impl<'q> sqlx::Encode<'q, Postgres> for PrNumber {
-    fn encode_by_ref(
-        &self,
-        buf: &mut <Postgres as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
-    ) -> sqlx::encode::IsNull {
-        sqlx::Encode::<Postgres>::encode_by_ref(&self.0, buf)
-    }
-}
-
-impl sqlx::Type<Postgres> for PrNumber {
-    fn type_info() -> <Postgres as sqlx::Database>::TypeInfo {
-        <i32 as sqlx::Type<Postgres>>::type_info()
-    }
-}
-
 pub struct PrNumberTooLarge(TryFromIntError);
 
 impl From<TryFromIntError> for PrNumberTooLarge {
@@ -97,18 +82,17 @@ impl Landing {
             txn: &mut Transaction<'_, Postgres>,
             landing: Landing,
         ) -> sqlx::Result<()> {
-            sqlx::query!(
-                "INSERT INTO github_prs(number) VALUES ($1)",
-                landing.github_pr_number
-            )
-            .execute(&mut **txn)
-            .await?;
+            let pr_num: i32 = landing.github_pr_number.into();
 
+            sqlx::query!("INSERT INTO github_prs(number) VALUES ($1)", pr_num)
+                .execute(&mut **txn)
+                .await?;
+
+            let channel: String = landing.channel.into();
             sqlx::query!(
                 "INSERT INTO landings(github_pr_number, channel) VALUES ($1, $2)",
-                83,
-                //<<< landing.github_pr_number,
-                landing.channel
+                pr_num,
+                channel,
             )
             .execute(&mut **txn)
             .await?;
