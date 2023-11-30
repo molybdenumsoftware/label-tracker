@@ -1,4 +1,7 @@
-use std::{num::TryFromIntError, ops::{Deref, DerefMut}};
+use std::{
+    num::TryFromIntError,
+    ops::{Deref, DerefMut},
+};
 
 use futures::FutureExt;
 use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgres, Transaction};
@@ -12,8 +15,12 @@ impl<'q> sqlx::Encode<'q, Postgres> for PrNumber {
         &self,
         buf: &mut <Postgres as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
     ) -> sqlx::encode::IsNull {
-        let mut bytes = buf.deref_mut();
-        self.0.to_ne_bytes()
+        sqlx::Encode::<Postgres>::encode_by_ref(&self.0, buf)
+    }
+}
+
+impl sqlx::Type<Postgres> for PrNumber {
+    fn type_info() -> <Postgres as sqlx::Database>::TypeInfo {
         todo!()
     }
 }
