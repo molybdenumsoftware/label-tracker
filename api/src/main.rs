@@ -48,7 +48,7 @@ impl From<sqlx::Error> for LandedError {
 
 #[get("/landed/github/<pr>")]
 async fn landed(mut db: Connection<Data>, pr: u64) -> Result<Json<LandedIn>, LandedError> {
-    let landings = Landing::for_pr(db.deref_mut(), pr).await?;
+    let landings = Landing::for_pr(&mut *db, pr).await?;
 
     let channels = rows
         .into_iter()
