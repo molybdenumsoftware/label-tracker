@@ -55,16 +55,17 @@ fn foo<'a, 'b>(foo: &'a str, bar: &'b str) -> &'a str {
     &bar[0..1]
 }
 
-impl<'r, 'o> rocket::response::Responder<'r, 'o> for LandedError {
+impl<'r, 'o: 'r> rocket::response::Responder<'r, 'o> for LandedError {
     fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
-        Ok(match self {
+        match self {
             LandedError::PrNumberTooLarge(()) => {
                 BadRequest(content::RawText("Pull request number too large")).respond_to(request)
             }
-            LandedError::ForPr(for_pr_error) => {
-
+            LandedError::ForPr(for_pr_error) => match for_pr_error {
+                ForPrError::Sqlx(_) => todo!(),
+                ForPrError::PrNotFound(_) => todo!(),
             },
-        })
+        }
     }
 }
 
