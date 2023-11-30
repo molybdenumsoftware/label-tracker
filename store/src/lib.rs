@@ -32,8 +32,10 @@ impl From<PrNumber> for i32 {
 #[derive(FromRow)]
 pub struct Landing {
     pub github_pr_number: PrNumber,
-    pub channel: String,
+    pub channel: Channel,
 }
+
+pub struct Channel(String);
 
 pub async fn migrate<'a, A>(connection: A) -> Result<(), sqlx::migrate::MigrateError>
 where
@@ -76,8 +78,7 @@ impl Landing {
         ) -> sqlx::Result<()> {
             sqlx::query!(
                 "INSERT INTO github_prs(number) VALUES ($1)",
-                83,
-                //<<< landing.github_pr_number
+                landing.github_pr_number
             )
             .execute(&mut **txn)
             .await?;

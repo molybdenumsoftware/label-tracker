@@ -35,13 +35,13 @@ struct LandedIn {
 }
 
 enum LandedError {
-    PrNumberTooLarge(()),
+    PrNumberTooLarge,
     ForPr(ForPrError),
 }
 
 impl From<PrNumberTooLarge> for LandedError {
     fn from(value: PrNumberTooLarge) -> Self {
-        Self::PrNumberTooLarge(value)
+        Self::PrNumberTooLarge
     }
 }
 
@@ -58,11 +58,11 @@ fn foo<'a, 'b>(foo: &'a str, bar: &'b str) -> &'a str {
 impl<'r, 'o: 'r> rocket::response::Responder<'r, 'o> for LandedError {
     fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
         match self {
-            LandedError::PrNumberTooLarge(()) => {
+            LandedError::PrNumberTooLarge => {
                 BadRequest(content::RawText("Pull request number too large")).respond_to(request)
             }
             LandedError::ForPr(for_pr_error) => match for_pr_error {
-                ForPrError::Sqlx(_) => todo!(),
+                ForPrError::Sqlx(sqlx_error) => todo!(),
                 ForPrError::PrNotFound(_) => todo!(),
             },
         }
@@ -75,8 +75,7 @@ async fn landed(mut db: Connection<Data>, pr: u32) -> Result<Json<LandedIn>, Lan
 
     let channels = landings
         .into_iter()
-        .map(|landing| landing.get::<String, _>("channel"))
-        .map(Channel)
+        .map(|landing| landing.channel)
         .collect();
 
     Ok(Json(LandedIn { channels }))
