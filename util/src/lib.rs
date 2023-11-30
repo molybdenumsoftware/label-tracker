@@ -77,7 +77,7 @@ impl DatabaseContext {
     }
 
     pub fn db_url(&self) -> String {
-        let dbname = "postgres"; // TODO
+        let dbname = "postgres";
 
         format!(
             "postgresql:///{dbname}?host={}&port={}",

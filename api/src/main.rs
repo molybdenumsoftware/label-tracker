@@ -4,8 +4,12 @@
 
 use rocket::{
     fairing::AdHoc,
+    http::Status,
     launch,
-    response::{content, status::BadRequest},
+    response::{
+        content,
+        status::{BadRequest, Custom, NotFound},
+    },
     serde::{json::Json, Deserialize, Serialize},
 };
 
@@ -56,11 +60,16 @@ impl<'r, 'o: 'r> rocket::response::Responder<'r, 'o> for LandedError {
     fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
         match self {
             LandedError::PrNumberTooLarge => {
-                BadRequest(content::RawText("Pull request number too large")).respond_to(request)
+                BadRequest(content::RawText("Pull request number too large.")).respond_to(request)
             }
             LandedError::ForPr(for_pr_error) => match for_pr_error {
-                //<<< ForPrError::Sqlx(sqlx_error) => todo!(),
-                ForPrError::PrNotFound(_) => todo!(),
+                ForPrError::Sqlx(_sqlx_error) => {
+                    let status = Status::from_code(500).unwrap();
+                    Custom(status, content::RawText("Error. Sorry.")).respond_to(request)
+                }
+                ForPrError::PrNotFound(_) => {
+                    NotFound(content::RawText("Pull request not found.")).respond_to(request)
+                }
             },
         }
     }
