@@ -2,22 +2,17 @@
 // required because rocket::launch, remove if clippy permits.
 #![allow(clippy::no_effect_underscore_binding)]
 
-use std::ops::DerefMut;
-
 use rocket::{
     fairing::AdHoc,
-    http::{ContentType, Status},
     launch,
     response::{content, status::BadRequest},
     serde::{json::Json, Deserialize, Serialize},
-    Response,
 };
 
 use rocket_db_pools::{
-    sqlx::{self, Row},
+    sqlx::{self},
     Connection, Database,
 };
-use sqlx::PgConnection;
 use store::{ForPrError, Landing, PrNumberTooLarge};
 
 #[derive(Database, Debug)]
@@ -29,7 +24,9 @@ struct Data(sqlx::Pool<sqlx::Postgres>);
 struct Channel(String);
 
 impl Channel {
-
+    pub fn new(s: impl AsRef<str>) -> Self {
+        Self(s.as_ref().to_string())
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -44,7 +41,7 @@ enum LandedError {
 }
 
 impl From<PrNumberTooLarge> for LandedError {
-    fn from(value: PrNumberTooLarge) -> Self {
+    fn from(_value: PrNumberTooLarge) -> Self {
         Self::PrNumberTooLarge
     }
 }
@@ -55,10 +52,6 @@ impl From<ForPrError> for LandedError {
     }
 }
 
-fn foo<'a, 'b>(foo: &'a str, bar: &'b str) -> &'a str {
-    &bar[0..1]
-}
-
 impl<'r, 'o: 'r> rocket::response::Responder<'r, 'o> for LandedError {
     fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
         match self {
@@ -66,7 +59,7 @@ impl<'r, 'o: 'r> rocket::response::Responder<'r, 'o> for LandedError {
                 BadRequest(content::RawText("Pull request number too large")).respond_to(request)
             }
             LandedError::ForPr(for_pr_error) => match for_pr_error {
-                ForPrError::Sqlx(sqlx_error) => todo!(),
+                //<<< ForPrError::Sqlx(sqlx_error) => todo!(),
                 ForPrError::PrNotFound(_) => todo!(),
             },
         }
