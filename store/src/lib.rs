@@ -1,4 +1,4 @@
-use std::{num::TryFromIntError, ops::Deref};
+use std::{num::TryFromIntError, ops::{Deref, DerefMut}};
 
 use futures::FutureExt;
 use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgres, Transaction};
@@ -6,6 +6,17 @@ use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgre
 pub mod server {}
 
 pub struct PrNumber(i32);
+
+impl<'q> sqlx::Encode<'q, Postgres> for PrNumber {
+    fn encode_by_ref(
+        &self,
+        buf: &mut <Postgres as sqlx::database::HasArguments<'q>>::ArgumentBuffer,
+    ) -> sqlx::encode::IsNull {
+        let mut bytes = buf.deref_mut();
+        self.0.to_ne_bytes()
+        todo!()
+    }
+}
 
 pub struct PrNumberTooLarge(TryFromIntError);
 
