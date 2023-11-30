@@ -1,8 +1,6 @@
 #![warn(clippy::pedantic)]
 // required because rocket::launch, remove if clippy permits.
 #![allow(clippy::no_effect_underscore_binding)]
-#[macro_use]
-extern crate rocket;
 
 use std::ops::DerefMut;
 
@@ -16,7 +14,7 @@ use rocket_db_pools::{
     Connection, Database,
 };
 use sqlx::PgConnection;
-use store::{Landing, PrNumberTooLarge};
+use store::{ForPrError, Landing, PrNumberTooLarge};
 
 #[derive(Database, Debug)]
 #[database("data")]
@@ -32,7 +30,7 @@ struct LandedIn {
     channels: Vec<Channel>,
 }
 
-#[derive(Responder)]
+#[derive(rocket::Responder)]
 enum LandedError {
     PrNumberTooLarge(PrNumberTooLarge),
     ForPr(ForPrError),
@@ -43,6 +41,14 @@ impl From<PrNumberTooLarge> for LandedError {
         Self::PrNumberTooLarge(value)
     }
 }
+
+impl From<ForPrError> for LandedError {
+    fn from(value: ForPrError) -> Self {
+        Self::ForPr(value)
+    }
+}
+
+impl rocket::response::Responder for PrNumberTooLarge {}
 
 #[get("/landed/github/<pr>")]
 async fn landed(mut db: Connection<Data>, pr: u32) -> Result<Json<LandedIn>, LandedError> {

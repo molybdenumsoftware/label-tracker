@@ -43,7 +43,7 @@ where
     sqlx::migrate!("./migrations").run(connection).await
 }
 
-enum ForPrError {
+pub enum ForPrError {
     Sqlx(sqlx::Error),
     PrNotFound(u64),
 }
