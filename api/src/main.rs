@@ -73,10 +73,6 @@ impl<'r, 'o: 'r> rocket::response::Responder<'r, 'o> for LandedError {
 async fn landed(mut db: Connection<Data>, pr: u32) -> Result<Json<LandedIn>, LandedError> {
     let landings = Landing::for_pr(&mut *db, pr.try_into()?).await?;
 
-    let numbers = vec![0, 1, 50, 512];
-
-    let strs: Vec<String> = numbers.into_iter().map(|n| n.)
-
     let channels: Vec<Channel> = landings
         .into_iter()
         .map(|landing| landing.channel)
@@ -147,8 +143,8 @@ mod test {
         let mut connection = ctx.connection().await.unwrap();
 
         let landing = Landing {
-            github_pr_number: 2134,
-            channel: "nixos-unstable".to_string(),
+            github_pr_number: 2134.try_into().unwrap(),
+            channel: Channel("nixos-unstable"),
         };
 
         landing.insert(&mut connection).await.unwrap();

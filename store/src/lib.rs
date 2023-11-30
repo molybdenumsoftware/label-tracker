@@ -9,10 +9,10 @@ use sqlx::{
     Transaction,
 };
 
-pub mod server {}
-
+#[derive(Debug)]
 pub struct PrNumber(i32);
 
+#[derive(Debug)]
 pub struct PrNumberTooLarge(TryFromIntError);
 
 impl From<TryFromIntError> for PrNumberTooLarge {
@@ -44,6 +44,10 @@ pub struct Landing {
 pub struct Channel(String);
 
 impl Channel {
+    pub fn new(s: &str) -> Self {
+        Self(s)
+    }
+
     pub fn as_str(&self) -> &str {
         &self.0
     }
