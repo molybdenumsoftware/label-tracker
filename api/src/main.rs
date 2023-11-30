@@ -6,6 +6,7 @@ use std::ops::DerefMut;
 
 use rocket::{
     fairing::AdHoc,
+    launch,
     serde::{json::Json, Deserialize, Serialize},
 };
 
@@ -48,15 +49,23 @@ impl From<ForPrError> for LandedError {
     }
 }
 
-impl rocket::response::Responder for PrNumberTooLarge {}
+fn foo<'a, 'b>(foo: &'a str, bar: &'b str) -> &'a str {
+    &bar[0..1]
+}
 
-#[get("/landed/github/<pr>")]
+impl<'r, 'o> rocket::response::Responder<'r, 'o> for PrNumberTooLarge {
+    fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
+        todo!()
+    }
+}
+
+#[rocket::get("/landed/github/<pr>")]
 async fn landed(mut db: Connection<Data>, pr: u32) -> Result<Json<LandedIn>, LandedError> {
     let landings = Landing::for_pr(&mut *db, pr.try_into()?).await?;
 
-    let channels = rows
+    let channels = landings
         .into_iter()
-        .map(|row| row.get::<String, _>("channel"))
+        .map(|landing| landing.get::<String, _>("channel"))
         .map(Channel)
         .collect();
 
@@ -65,7 +74,9 @@ async fn landed(mut db: Connection<Data>, pr: u32) -> Result<Json<LandedIn>, Lan
 
 fn app() -> AdHoc {
     AdHoc::on_ignite("main", |rocket| async {
-        rocket.attach(Data::init()).mount("/", routes![landed])
+        rocket
+            .attach(Data::init())
+            .mount("/", rocket::routes![landed])
     })
 }
 
