@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{num::TryFromIntError, ops::Deref};
 
 use futures::FutureExt;
 use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgres, Transaction};
@@ -7,12 +7,19 @@ pub mod server {}
 
 pub struct PrNumber(i32);
 
-struct PrNumberTooLarge();
+struct PrNumberTooLarge(TryFromIntError);
 
-impl PrNumber {
-    pub fn new(number: u32) -> Result<Self, PrNumberTooLarge> {
-        let number = number.try_into()?;
-        Self(number)
+impl From<TryFromIntError> for PrNumberTooLarge {
+    fn from(value: TryFromIntError) -> Self {
+        Self(value)
+    }
+}
+
+impl TryFrom<u32> for PrNumber {
+    type Error = PrNumberTooLarge;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(Self(value.try_into()?))
     }
 }
 
