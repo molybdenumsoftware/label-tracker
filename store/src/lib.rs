@@ -5,9 +5,21 @@ use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgre
 
 pub mod server {}
 
+pub struct PrNumber(u32);
+
+impl PrNumber {
+    pub fn new(number: u32) -
+}
+
+impl From<PrNumber> for i32 {
+    fn from(value: PrNumber) -> Self {
+        value.0.try_into().unwrap()
+    }
+}
+
 #[derive(FromRow)]
 pub struct Landing {
-    pub github_pr_number: i32,
+    pub github_pr_number: PrNumber,
     pub channel: String,
 }
 
