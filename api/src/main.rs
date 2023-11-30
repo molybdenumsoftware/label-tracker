@@ -34,18 +34,8 @@ struct LandedIn {
 
 #[derive(Responder)]
 enum LandedError {
-    #[response(status = 404)]
-    PrNotFound(()),
-    #[response(status = 400)]
     PrNumberTooLarge(PrNumberTooLarge),
-    #[response(status = 500)]
-    Db(()),
-}
-
-impl From<sqlx::Error> for LandedError {
-    fn from(_value: sqlx::Error) -> Self {
-        Self::Db(())
-    }
+    ForPr(ForPrError),
 }
 
 impl From<PrNumberTooLarge> for LandedError {
