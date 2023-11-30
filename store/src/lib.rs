@@ -1,13 +1,7 @@
-use std::{
-    num::TryFromIntError,
-    ops::{Deref, DerefMut},
-};
+use std::{num::TryFromIntError, ops::Deref};
 
 use futures::FutureExt;
-use sqlx::{
-    migrate::Migrate, postgres::PgTypeInfo, Acquire, Connection, FromRow, PgConnection, Postgres,
-    Transaction,
-};
+use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgres, Transaction};
 
 #[derive(Debug)]
 pub struct PrNumber(i32);
@@ -73,14 +67,15 @@ impl Landing {
         connection: &mut PgConnection,
         pr: PrNumber,
     ) -> Result<Vec<Landing>, ForPrError> {
-        let rows = sqlx::query!(
+        let pr_num: i32 = pr.into();
+
+        let foo = sqlx::query!(
             "SELECT channel from landings where github_pr_number = $1",
-            Some(32),
-            //<<< pr.into()
+            pr_num,
         )
-        .fetch_all(connection);
-        //<<< .await?;
-        todo!()
+        .fetch_all(connection)
+        .await?;
+        Ok(foo)
     }
 
     pub async fn insert(
