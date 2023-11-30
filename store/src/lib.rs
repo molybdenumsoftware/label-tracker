@@ -43,6 +43,12 @@ pub struct Landing {
 
 pub struct Channel(String);
 
+impl Channel {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 pub async fn migrate<'a, A>(connection: A) -> Result<(), sqlx::migrate::MigrateError>
 where
     A: Acquire<'a>,
@@ -88,11 +94,10 @@ impl Landing {
                 .execute(&mut **txn)
                 .await?;
 
-            let channel: String = landing.channel.into();
             sqlx::query!(
                 "INSERT INTO landings(github_pr_number, channel) VALUES ($1, $2)",
                 pr_num,
-                channel,
+                landing.channel.as_str(),
             )
             .execute(&mut **txn)
             .await?;
