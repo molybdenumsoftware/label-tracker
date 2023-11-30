@@ -6,8 +6,10 @@ use std::ops::DerefMut;
 
 use rocket::{
     fairing::AdHoc,
+    http::ContentType,
     launch,
     serde::{json::Json, Deserialize, Serialize},
+    Response,
 };
 
 use rocket_db_pools::{
@@ -31,10 +33,8 @@ struct LandedIn {
     channels: Vec<Channel>,
 }
 
-#[derive(rocket::Responder)]
 enum LandedError {
-    InvalidRequest(str),
-    //<<< PrNumberTooLarge(()),
+    PrNumberTooLarge(()),
     ForPr(ForPrError),
 }
 
@@ -54,9 +54,18 @@ fn foo<'a, 'b>(foo: &'a str, bar: &'b str) -> &'a str {
     &bar[0..1]
 }
 
-impl<'r, 'o> rocket::response::Responder<'r, 'o> for PrNumberTooLarge {
+impl<'r, 'o> rocket::response::Responder<'r, 'o> for LandedError {
     fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
-        todo!()
+        Ok(match self {
+            LandedError::PrNumberTooLarge(_) => {
+                let mut response = Response::new();
+                response.set_status(400);
+                response.set_header(ContentType::Plain);
+                response.set_streamed_body("fello");
+                response
+            }
+            LandedError::ForPr(_) => todo!(),
+        })
     }
 }
 
