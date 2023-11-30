@@ -3,7 +3,7 @@ create table github_prs (
 );
 
 create table landings (
-    github_pr_number int references github_prs(number)
+    github_pr_number int not null references github_prs(number)
     ,
     channel varchar(255)
 );

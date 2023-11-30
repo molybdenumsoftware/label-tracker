@@ -7,7 +7,7 @@ pub mod server {}
 
 pub struct PrNumber(i32);
 
-struct PrNumberTooLarge(TryFromIntError);
+pub struct PrNumberTooLarge(TryFromIntError);
 
 impl From<TryFromIntError> for PrNumberTooLarge {
     fn from(value: TryFromIntError) -> Self {
@@ -57,10 +57,11 @@ impl Landing {
     ) -> Result<Vec<Landing>, ForPrError> {
         let rows = sqlx::query!(
             "SELECT channel from landings where github_pr_number = $1",
-            pr.into()
+            32,
+            //<<< pr.into()
         )
-        .fetch_all(connection)
-        .await?;
+        .fetch_all(connection);
+        //<<< .await?;
         todo!()
     }
 
@@ -75,14 +76,16 @@ impl Landing {
         ) -> sqlx::Result<()> {
             sqlx::query!(
                 "INSERT INTO github_prs(number) VALUES ($1)",
-                landing.github_pr_number
+                83,
+                //<<< landing.github_pr_number
             )
             .execute(&mut **txn)
             .await?;
 
             sqlx::query!(
                 "INSERT INTO landings(github_pr_number, channel) VALUES ($1, $2)",
-                landing.github_pr_number,
+                83,
+                //<<< landing.github_pr_number,
                 landing.channel
             )
             .execute(&mut **txn)
