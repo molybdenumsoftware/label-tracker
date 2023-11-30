@@ -28,6 +28,10 @@ struct Data(sqlx::Pool<sqlx::Postgres>);
 #[serde(crate = "rocket::serde")]
 struct Channel(String);
 
+impl Channel {
+
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(crate = "rocket::serde")]
 struct LandedIn {
@@ -73,10 +77,10 @@ impl<'r, 'o: 'r> rocket::response::Responder<'r, 'o> for LandedError {
 async fn landed(mut db: Connection<Data>, pr: u32) -> Result<Json<LandedIn>, LandedError> {
     let landings = Landing::for_pr(&mut *db, pr.try_into()?).await?;
 
-    let channels: Vec<Channel> = landings
+    let channels = landings
         .into_iter()
-        .map(|landing| landing.channel)
-        .collect::<Vec<Channel>>();
+        .map(|landing| Channel::new(landing.channel.as_str()))
+        .collect();
 
     Ok(Json(LandedIn { channels }))
 }
@@ -144,7 +148,7 @@ mod test {
 
         let landing = Landing {
             github_pr_number: 2134.try_into().unwrap(),
-            channel: Channel("nixos-unstable"),
+            channel: store::Channel::new("nixos-unstable"),
         };
 
         landing.insert(&mut connection).await.unwrap();

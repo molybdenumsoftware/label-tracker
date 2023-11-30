@@ -44,8 +44,8 @@ pub struct Landing {
 pub struct Channel(String);
 
 impl Channel {
-    pub fn new(s: &str) -> Self {
-        Self(s)
+    pub fn new(s: impl AsRef<str>) -> Self {
+        Self(s.as_ref().to_string())
     }
 
     pub fn as_str(&self) -> &str {
