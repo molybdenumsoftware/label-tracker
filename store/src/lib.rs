@@ -57,7 +57,7 @@ impl Landing {
     ) -> Result<Vec<Landing>, ForPrError> {
         let rows = sqlx::query!(
             "SELECT channel from landings where github_pr_number = $1",
-            32,
+            Some(32),
             //<<< pr.into()
         )
         .fetch_all(connection);

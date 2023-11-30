@@ -13,6 +13,7 @@ use rocket_db_pools::{
     sqlx::{self, Row},
     Connection, Database,
 };
+use sqlx::PgConnection;
 use store::Landing;
 
 #[derive(Database, Debug)]
@@ -44,7 +45,7 @@ impl From<sqlx::Error> for LandedError {
 }
 
 #[get("/landed/github/<pr>")]
-async fn landed(db: &mut PgConnection, pr: u64) -> Result<Json<LandedIn>, LandedError> {
+async fn landed(mut db: PgConnection, pr: u64) -> Result<Json<LandedIn>, LandedError> {
     let landings = Landing::for_pr(db, pr).await?;
 
     let channels = rows
