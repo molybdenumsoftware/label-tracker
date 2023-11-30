@@ -33,7 +33,8 @@ struct LandedIn {
 
 #[derive(rocket::Responder)]
 enum LandedError {
-    PrNumberTooLarge(PrNumberTooLarge),
+    InvalidRequest(str),
+    //<<< PrNumberTooLarge(()),
     ForPr(ForPrError),
 }
 
