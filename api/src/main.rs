@@ -58,11 +58,15 @@ impl<'r, 'o> rocket::response::Responder<'r, 'o> for LandedError {
     fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
         Ok(match self {
             LandedError::PrNumberTooLarge(_) => {
-                let mut response = Response::new();
-                response.set_status(400);
-                response.set_header(ContentType::Plain);
-                response.set_streamed_body("fello");
-                response
+                (Status::ImATeapot, (ContentType::JSON, "{ \"hi\": \"world\" }"))
+                 rocket::response::status::BadRequest(content::Plain("pr number too large"))
+                    .respond_to(request);
+                //<<< (400, "fooo").respond_to(request);
+                //<<< let mut response = Response::new();
+                //<<< response.set_status(400);
+                //<<< response.set_header(ContentType::Plain);
+                //<<< response.set_streamed_body("fello");
+                //<<< response
             }
             LandedError::ForPr(_) => todo!(),
         })
