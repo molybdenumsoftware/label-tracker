@@ -6,8 +6,9 @@ use std::ops::DerefMut;
 
 use rocket::{
     fairing::AdHoc,
-    http::ContentType,
+    http::{ContentType, Status},
     launch,
+    response::{content, status::BadRequest},
     serde::{json::Json, Deserialize, Serialize},
     Response,
 };
@@ -57,18 +58,12 @@ fn foo<'a, 'b>(foo: &'a str, bar: &'b str) -> &'a str {
 impl<'r, 'o> rocket::response::Responder<'r, 'o> for LandedError {
     fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
         Ok(match self {
-            LandedError::PrNumberTooLarge(_) => {
-                (Status::ImATeapot, (ContentType::JSON, "{ \"hi\": \"world\" }"))
-                 rocket::response::status::BadRequest(content::Plain("pr number too large"))
-                    .respond_to(request);
-                //<<< (400, "fooo").respond_to(request);
-                //<<< let mut response = Response::new();
-                //<<< response.set_status(400);
-                //<<< response.set_header(ContentType::Plain);
-                //<<< response.set_streamed_body("fello");
-                //<<< response
+            LandedError::PrNumberTooLarge(()) => {
+                BadRequest(content::RawText("Pull request number too large")).respond_to(request)
             }
-            LandedError::ForPr(_) => todo!(),
+            LandedError::ForPr(for_pr_error) => {
+
+            },
         })
     }
 }
