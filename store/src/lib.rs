@@ -1,6 +1,6 @@
 #![warn(clippy::pedantic)]
 
-use std::{num::TryFromIntError, ops::Deref, collections::BTreeSet};
+use std::{collections::BTreeSet, num::TryFromIntError, ops::Deref};
 
 use futures::FutureExt;
 use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgres, Transaction};
