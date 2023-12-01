@@ -51,19 +51,6 @@ impl Channel {
     }
 }
 
-/// Runs all the migrations against the provided connection.
-///
-/// # Errors
-///
-/// See error type for details.
-async fn migrate<'a, A>(connection: A) -> Result<(), sqlx::migrate::MigrateError>
-where
-    A: Acquire<'a>,
-    <A::Connection as Deref>::Target: Migrate,
-{
-    sqlx::migrate!("../migrations").run(connection).await
-}
-
 pub enum ForPrError {
     Sqlx(sqlx::Error),
     PrNotFound(u64),

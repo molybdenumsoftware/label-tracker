@@ -74,7 +74,7 @@ impl DatabaseContext {
 
         let this = Self { tmp_dir, postgres };
 
-        sqlx::migrate!("../migrations")
+        sqlx::migrate!("./migrations")
             .run(&this.pool().await.unwrap())
             .await
             .unwrap();

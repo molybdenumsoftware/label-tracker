@@ -109,15 +109,15 @@ mod test {
 
     use crate::{Channel, LandedIn};
 
-    trait TestContext {}
+    trait Rocketable {
+        fn rocket(&self) -> Rocket<rocket::Build>;
+    }
 
-    impl TestContext {
-        async fn init() -> Self {}
-
+    impl Rocketable for DatabaseContext {
         fn rocket(&self) -> Rocket<rocket::Build> {
             rocket::custom(
                 Figment::from(rocket::Config::default())
-                    .merge(("databases.data.url", self.database_ctx.db_url()))
+                    .merge(("databases.data.url", self.db_url()))
                     .merge(("log_level", rocket::config::LogLevel::Debug)),
             )
             .attach(super::app())
@@ -126,7 +126,7 @@ mod test {
 
     #[tokio::test]
     async fn pr_not_found() {
-        DatabaseContext::with(|ctx| {
+        DatabaseContext::with(|ctx| async {
             let client = Client::tracked(ctx.rocket()).await.unwrap();
             let response = client.get("/landed/github/2134").dispatch().await;
             assert_eq!(response.status(), Status::NotFound);
@@ -137,7 +137,7 @@ mod test {
 
     #[tokio::test]
     async fn pr_landed_in_master() {
-        let ctx = TestContext::init().await;
+        let ctx = Rocketable::init().await;
         let mut connection = ctx.connection().await.unwrap();
 
         let landing = Landing {
