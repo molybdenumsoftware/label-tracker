@@ -109,15 +109,10 @@ mod test {
 
     use crate::{Channel, LandedIn};
 
-    struct TestContext {
-        database_ctx: DatabaseContext,
-    }
+    struct TestContext;
 
     impl TestContext {
-        async fn init() -> Self {
-            let database_ctx = DatabaseContext::init().await;
-            Self { database_ctx }
-        }
+        async fn init() -> Self {}
 
         async fn connection(&self) -> Result<PgConnection, sqlx::Error> {
             let url = self.database_ctx.db_url();
@@ -136,11 +131,13 @@ mod test {
 
     #[tokio::test]
     async fn pr_not_found() {
-        let ctx = TestContext::init().await;
-        let client = Client::tracked(ctx.rocket()).await.unwrap();
-        let response = client.get("/landed/github/2134").dispatch().await;
-        assert_eq!(response.status(), Status::NotFound);
-        assert_eq!(response.into_string().await, Some("PR not found".into()));
+        DatabaseContext::with(|ctx| {
+            let client = Client::tracked(ctx.rocket()).await.unwrap();
+            let response = client.get("/landed/github/2134").dispatch().await;
+            assert_eq!(response.status(), Status::NotFound);
+            assert_eq!(response.into_string().await, Some("PR not found".into()));
+        })
+        .await;
     }
 
     #[tokio::test]
