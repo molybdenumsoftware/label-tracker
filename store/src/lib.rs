@@ -50,6 +50,9 @@ impl Channel {
     }
 }
 
+/// # Errors
+///
+/// See error type for details.
 pub async fn migrate<'a, A>(connection: A) -> Result<(), sqlx::migrate::MigrateError>
 where
     A: Acquire<'a>,
