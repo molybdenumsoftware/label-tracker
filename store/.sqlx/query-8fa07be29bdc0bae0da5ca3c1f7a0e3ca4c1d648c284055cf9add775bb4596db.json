@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT count(*) from github_prs where number = $1",
+  "query": "SELECT count(*) as count from github_prs where number = $1",
   "describe": {
     "columns": [
       {
@@ -18,5 +18,5 @@
       null
     ]
   },
-  "hash": "1370cf731997562aee888031273efd34382d7d80195ce0e09c8711d517be216c"
+  "hash": "8fa07be29bdc0bae0da5ca3c1f7a0e3ca4c1d648c284055cf9add775bb4596db"
 }
