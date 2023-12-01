@@ -78,14 +78,20 @@ impl Landing {
         connection: &mut PgConnection,
         pr: PrNumber,
     ) -> Result<BTreeSet<Channel>, ForPrError> {
-        let pr_num: i32 = pr.into();
-
-        let records = sqlx::query!(
-            "SELECT channel from landings where github_pr_number = $1",
-            pr_num,
-        )
-        .fetch_all(connection)
-        .await?;
+        async fn transaction(
+            txn: &mut Transaction<'_, Postgres>,
+            pr_num: PrNumber,
+        ) -> sqlx::Result<()> {
+            let records = sqlx::query!(
+                "SELECT channel from landings where github_pr_number = $1",
+                pr_num,
+            )
+            .fetch_all(connection)
+            .await?;
+        }
+        let something = connection
+            .transaction(|txn| transaction(txn, pr).boxed())
+            .await?;
 
         let channels = records
             .into_iter()
