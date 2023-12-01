@@ -22,7 +22,7 @@ impl DatabaseContext {
     // See `listen_addresses` below.
     const PORT: &str = "1";
 
-    async fn connection(&self) -> Result<sqlx::PgConnection, sqlx::Error> {
+    pub async fn connection(&self) -> Result<sqlx::PgConnection, sqlx::Error> {
         let url = self.db_url();
         sqlx::PgConnection::connect(&url).await
     }

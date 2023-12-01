@@ -126,11 +126,15 @@ mod test {
 
     #[tokio::test]
     async fn pr_not_found() {
-        DatabaseContext::with(|ctx| async {
-            let client = Client::tracked(ctx.rocket()).await.unwrap();
-            let response = client.get("/landed/github/2134").dispatch().await;
-            assert_eq!(response.status(), Status::NotFound);
-            assert_eq!(response.into_string().await, Some("PR not found".into()));
+        DatabaseContext::with(|ctx: &DatabaseContext| {
+            let future = async {
+                let client = Client::tracked(ctx.rocket()).await.unwrap();
+                let response = client.get("/landed/github/2134").dispatch().await;
+                assert_eq!(response.status(), Status::NotFound);
+                assert_eq!(response.into_string().await, Some("PR not found".into()));
+            };
+
+            future
         })
         .await;
     }
