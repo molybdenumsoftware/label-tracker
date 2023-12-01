@@ -13,5 +13,4 @@ async fn main() {
         .unwrap();
 
     assert!(status.success());
-    println!("hello, world")
 }
