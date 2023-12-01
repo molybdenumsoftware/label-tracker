@@ -1,10 +1,11 @@
-use std::{os::unix::process::CommandExt, process::Command};
+use std::process::{self, Command};
 use util::DatabaseContext;
 
 #[tokio::main]
 async fn main() {
     let database_ctx = DatabaseContext::init();
-
-    Command::new("psql").arg(database_ctx.await.db_url()).exec();
-    println!("this ain't gonna happen");
+    let db_url = database_ctx.await.db_url();
+    let status = Command::new("psql").arg(db_url).status().unwrap();
+    drop(database_ctx);
+    process::exit(status.code().unwrap());
 }

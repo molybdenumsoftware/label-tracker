@@ -12,5 +12,6 @@ async fn main() {
         .status()
         .unwrap();
 
+    drop(database_ctx);
     assert!(status.success());
 }
