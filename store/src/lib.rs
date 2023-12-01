@@ -37,6 +37,7 @@ pub struct Landing {
     pub channel: Channel,
 }
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Channel(String);
 
 impl Channel {

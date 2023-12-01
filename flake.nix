@@ -46,6 +46,11 @@
         program = pipe "sqlx-prepare" [util getExe];
       };
 
+      apps.db-repl = {
+        type = "app";
+        program = pipe "db-repl" [util getExe];
+      };
+
       checks =
         packages
         // {
