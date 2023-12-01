@@ -1,3 +1,4 @@
+use futures::future::BoxFuture;
 use sqlx::Connection;
 use std::process::{Child, Command};
 use std::time::{Duration, Instant};
@@ -92,9 +93,9 @@ impl DatabaseContext {
         )
     }
 
-    pub async fn with<T>(f: impl FnOnce(&Self) -> T) -> T {
+    pub async fn with<T>(f: impl FnOnce(&Self) -> BoxFuture<T>) -> T {
         let ctx = Self::init().await;
-        let t = f(&ctx);
+        let t = f(&ctx).await;
         drop(ctx);
         t
     }
