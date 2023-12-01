@@ -102,7 +102,9 @@ fn rocket() -> _ {
 
 #[cfg(test)]
 mod test {
-    use rocket::{figment::Figment, http::Status, local::asynchronous::Client, Rocket};
+    use rocket::{
+        figment::Figment, futures::FutureExt, http::Status, local::asynchronous::Client, Rocket,
+    };
     use sqlx::{Connection, PgConnection};
     use store::Landing;
     use util::DatabaseContext;
@@ -127,39 +129,41 @@ mod test {
     #[tokio::test]
     async fn pr_not_found() {
         DatabaseContext::with(|ctx: &DatabaseContext| {
-            let future = async {
+            async {
                 let client = Client::tracked(ctx.rocket()).await.unwrap();
                 let response = client.get("/landed/github/2134").dispatch().await;
                 assert_eq!(response.status(), Status::NotFound);
                 assert_eq!(response.into_string().await, Some("PR not found".into()));
-            };
-
-            future
+            }
+            .boxed()
         })
         .await;
     }
 
     #[tokio::test]
     async fn pr_landed_in_master() {
-        DatabaseContext::with(|ctx| async {
-            let mut connection = ctx.connection().await.unwrap();
+        DatabaseContext::with(|ctx| {
+            async {
+                let mut connection = ctx.connection().await.unwrap();
 
-            let landing = Landing {
-                github_pr_number: 2134.try_into().unwrap(),
-                channel: store::Channel::new("nixos-unstable"),
-            };
+                let landing = Landing {
+                    github_pr_number: 2134.try_into().unwrap(),
+                    channel: store::Channel::new("nixos-unstable"),
+                };
 
-            landing.insert(&mut connection).await.unwrap();
+                landing.insert(&mut connection).await.unwrap();
 
-            let client = Client::tracked(ctx.rocket()).await.unwrap();
-            let response = client.get("/landed/github/2134").dispatch().await;
-            assert_eq!(response.status(), Status::Ok);
-            assert_eq!(
-                response.into_json::<LandedIn>().await.unwrap(),
-                LandedIn {
-                    channels: vec![Channel("nixos-unstable".to_owned())]
-                }
-            );
+                let client = Client::tracked(ctx.rocket()).await.unwrap();
+                let response = client.get("/landed/github/2134").dispatch().await;
+                assert_eq!(response.status(), Status::Ok);
+                assert_eq!(
+                    response.into_json::<LandedIn>().await.unwrap(),
+                    LandedIn {
+                        channels: vec![Channel("nixos-unstable".to_owned())]
+                    }
+                );
+            }
+            .boxed()
         })
         .await;
     }
