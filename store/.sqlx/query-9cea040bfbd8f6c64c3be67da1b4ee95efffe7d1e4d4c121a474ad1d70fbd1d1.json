@@ -1,12 +1,12 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT count(*) as count from github_prs where number = $1",
+  "query": "SELECT 1 as foo from github_prs where number = $1 limit 1",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "count",
-        "type_info": "Int8"
+        "name": "foo",
+        "type_info": "Int4"
       }
     ],
     "parameters": {
@@ -18,5 +18,5 @@
       null
     ]
   },
-  "hash": "8fa07be29bdc0bae0da5ca3c1f7a0e3ca4c1d648c284055cf9add775bb4596db"
+  "hash": "9cea040bfbd8f6c64c3be67da1b4ee95efffe7d1e4d4c121a474ad1d70fbd1d1"
 }

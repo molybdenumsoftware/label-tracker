@@ -85,15 +85,12 @@ impl Landing {
             let pr_num: i32 = pr_num.into();
 
             let record = sqlx::query!(
-                "SELECT EXISTS(
-                    SELECT *
-                    FROM github_prs
-                    WHERE number = $1
-                ) AS pr_exists;",
-                pr_num,
+                "SELECT 1 as foo from github_prs where number = $1 limit 1",
+                pr_num
             )
             .fetch_one(&mut **txn)
             .await?;
+            //<<< record.pr_exists
 
             let records = sqlx::query!(
                 "SELECT channel from landings where github_pr_number = $1",
