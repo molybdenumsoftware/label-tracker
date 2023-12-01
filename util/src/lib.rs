@@ -21,6 +21,11 @@ impl DatabaseContext {
     // See `listen_addresses` below.
     const PORT: &str = "1";
 
+    async fn connection(&self) -> Result<PgConnection, sqlx::Error> {
+        let url = self.database_ctx.db_url();
+        sqlx::PgConnection::connect(&url).await
+    }
+
     fn sockets_dir(path: &Utf8Path) -> Utf8PathBuf {
         path.join("sockets")
     }
@@ -68,7 +73,7 @@ impl DatabaseContext {
 
         let this = Self { tmp_dir, postgres };
 
-        sqlx::migrate!("../store/migrations")
+        sqlx::migrate!("../migrations")
             .run(&this.pool().await.unwrap())
             .await
             .unwrap();

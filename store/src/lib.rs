@@ -56,12 +56,12 @@ impl Channel {
 /// # Errors
 ///
 /// See error type for details.
-pub async fn migrate<'a, A>(connection: A) -> Result<(), sqlx::migrate::MigrateError>
+async fn migrate<'a, A>(connection: A) -> Result<(), sqlx::migrate::MigrateError>
 where
     A: Acquire<'a>,
     <A::Connection as Deref>::Target: Migrate,
 {
-    sqlx::migrate!("./migrations").run(connection).await
+    sqlx::migrate!("../migrations").run(connection).await
 }
 
 pub enum ForPrError {

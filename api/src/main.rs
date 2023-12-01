@@ -109,15 +109,10 @@ mod test {
 
     use crate::{Channel, LandedIn};
 
-    struct TestContext;
+    trait TestContext {}
 
     impl TestContext {
         async fn init() -> Self {}
-
-        async fn connection(&self) -> Result<PgConnection, sqlx::Error> {
-            let url = self.database_ctx.db_url();
-            sqlx::PgConnection::connect(&url).await
-        }
 
         fn rocket(&self) -> Rocket<rocket::Build> {
             rocket::custom(
