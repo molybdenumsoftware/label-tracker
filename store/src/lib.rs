@@ -81,24 +81,27 @@ impl Landing {
         async fn transaction(
             txn: &mut Transaction<'_, Postgres>,
             pr_num: PrNumber,
-        ) -> sqlx::Result<Vec<Record>> {
+        ) -> sqlx::Result<BTreeSet<Channel>> {
             let pr_num: i32 = pr_num.into();
-            Ok(sqlx::query!(
+
+            let records = sqlx::query!(
                 "SELECT channel from landings where github_pr_number = $1",
                 pr_num,
             )
             .fetch_all(&mut **txn)
-            .await?)
-        }
-
-        let records = connection
-            .transaction(|txn| transaction(txn, pr).boxed())
             .await?;
 
-        let channels = records
-            .into_iter()
-            .map(|record| Channel::new(record.channel))
-            .collect();
+            let channels = records
+                .into_iter()
+                .map(|record| Channel::new(record.channel))
+                .collect();
+
+            Ok(channels)
+        }
+
+        let channels = connection
+            .transaction(|txn| transaction(txn, pr_num).boxed())
+            .await?;
 
         Ok(channels)
     }
@@ -134,7 +137,5 @@ impl Landing {
             .transaction(|txn| transaction(txn, self).boxed())
             .await?;
         Ok(())
-        // .unwrap();
-        //sqlx::query!("insert")
     }
 }
