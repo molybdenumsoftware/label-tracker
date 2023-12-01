@@ -77,6 +77,11 @@ impl From<sqlx::Error> for ForPrError {
 impl Landing {
     pub const TABLE: &str = "landings";
 
+    /// Retrieves all [`Channel`]s this PR has landed in.
+    ///
+    /// # Errors
+    ///
+    /// See error type for details.
     ///
     /// # Panics
     ///
