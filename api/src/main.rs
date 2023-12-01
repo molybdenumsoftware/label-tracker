@@ -77,7 +77,7 @@ impl<'r, 'o: 'r> rocket::response::Responder<'r, 'o> for LandedError {
 
 #[rocket::get("/landed/github/<pr>")]
 async fn landed(mut db: Connection<Data>, pr: u32) -> Result<Json<LandedIn>, LandedError> {
-    let landings = Landing::for_pr(&mut *db, pr.try_into()?).await?;
+    let landings = Landing::for_pr(&mut db, pr.try_into()?).await?;
 
     let channels = landings
         .into_iter()

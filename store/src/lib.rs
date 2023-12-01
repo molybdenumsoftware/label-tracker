@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 use std::{num::TryFromIntError, ops::Deref};
 
 use futures::FutureExt;
@@ -42,6 +44,7 @@ impl Channel {
         Self(s.as_ref().to_string())
     }
 
+    #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
     }
