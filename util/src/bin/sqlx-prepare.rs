@@ -1,3 +1,4 @@
+use futures::FutureExt;
 use std::process::Command;
 use util::DatabaseContext;
 
@@ -12,6 +13,8 @@ async fn main() {
             .unwrap();
 
         assert!(status.success());
+
+        futures::future::ready(()).boxed()
     })
     .await;
 }

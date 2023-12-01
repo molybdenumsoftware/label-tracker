@@ -105,7 +105,6 @@ mod test {
     use rocket::{
         figment::Figment, futures::FutureExt, http::Status, local::asynchronous::Client, Rocket,
     };
-    use sqlx::{Connection, PgConnection};
     use store::Landing;
     use util::DatabaseContext;
 

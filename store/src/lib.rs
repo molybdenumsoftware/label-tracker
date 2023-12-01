@@ -1,9 +1,9 @@
 #![warn(clippy::pedantic)]
 
-use std::{collections::BTreeSet, num::TryFromIntError, ops::Deref};
+use std::{collections::BTreeSet, num::TryFromIntError};
 
 use futures::FutureExt;
-use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgres, Transaction};
+use sqlx::{Connection, FromRow, PgConnection, Postgres, Transaction};
 
 #[derive(Debug)]
 pub struct PrNumber(i32);
