@@ -67,7 +67,7 @@ impl<'r, 'o: 'r> rocket::response::Responder<'r, 'o> for LandedError {
                     let status = Status::from_code(500).unwrap();
                     Custom(status, content::RawText("Error. Sorry.")).respond_to(request)
                 }
-                ForPrError::PrNotFound(_) => {
+                ForPrError::PrNotFound => {
                     NotFound(content::RawText("Pull request not found.")).respond_to(request)
                 }
             },
@@ -132,7 +132,7 @@ mod test {
                 let client = Client::tracked(ctx.rocket()).await.unwrap();
                 let response = client.get("/landed/github/2134").dispatch().await;
                 assert_eq!(response.status(), Status::NotFound);
-                assert_eq!(response.into_string().await, Some("PR not found".into()));
+                assert_eq!(response.into_string().await, Some("Pull request not found.".into()));
             }
             .boxed()
         })

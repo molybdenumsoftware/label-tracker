@@ -53,7 +53,7 @@ impl Channel {
 
 pub enum ForPrError {
     Sqlx(sqlx::Error),
-    PrNotFound(u64),
+    PrNotFound,
 }
 
 impl From<sqlx::Error> for ForPrError {
@@ -81,16 +81,20 @@ impl Landing {
         async fn transaction(
             txn: &mut Transaction<'_, Postgres>,
             pr_num: PrNumber,
-        ) -> sqlx::Result<BTreeSet<Channel>> {
+        ) -> Result<BTreeSet<Channel>, ForPrError> {
             let pr_num: i32 = pr_num.into();
 
-            let record = sqlx::query!(
+            let exists = sqlx::query!(
                 "SELECT 1 as foo from github_prs where number = $1 limit 1",
                 pr_num
             )
-            .fetch_one(&mut **txn)
-            .await?;
-            //<<< record.pr_exists
+            .fetch_optional(&mut **txn)
+            .await?
+            .is_some();
+
+            if !exists {
+                return Err(ForPrError::PrNotFound);
+            }
 
             let records = sqlx::query!(
                 "SELECT channel from landings where github_pr_number = $1",
