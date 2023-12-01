@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT 1 as foo from github_prs where number = $1 limit 1",
+  "query": "SELECT 1 as pr from github_prs where number = $1",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "foo",
+        "name": "pr",
         "type_info": "Int4"
       }
     ],
@@ -18,5 +18,5 @@
       null
     ]
   },
-  "hash": "9cea040bfbd8f6c64c3be67da1b4ee95efffe7d1e4d4c121a474ad1d70fbd1d1"
+  "hash": "d0834c96a348ae04650d0ddf8fa71b076413cd144d6bace2744d6fd37827dfeb"
 }

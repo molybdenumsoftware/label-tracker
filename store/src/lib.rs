@@ -84,13 +84,10 @@ impl Landing {
         ) -> Result<BTreeSet<Channel>, ForPrError> {
             let pr_num: i32 = pr_num.into();
 
-            let exists = sqlx::query!(
-                "SELECT 1 as foo from github_prs where number = $1 limit 1",
-                pr_num
-            )
-            .fetch_optional(&mut **txn)
-            .await?
-            .is_some();
+            let exists = sqlx::query!("SELECT 1 as pr from github_prs where number = $1", pr_num)
+                .fetch_optional(&mut **txn)
+                .await?
+                .is_some();
 
             if !exists {
                 return Err(ForPrError::PrNotFound);
