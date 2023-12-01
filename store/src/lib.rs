@@ -50,6 +50,8 @@ impl Channel {
     }
 }
 
+/// Runs all the migrations against the provided connection.
+///
 /// # Errors
 ///
 /// See error type for details.
@@ -75,6 +77,10 @@ impl From<sqlx::Error> for ForPrError {
 impl Landing {
     pub const TABLE: &str = "landings";
 
+    ///
+    /// # Panics
+    ///
+    /// See [`sqlx::query!`].
     pub async fn for_pr(
         connection: &mut PgConnection,
         pr: PrNumber,
