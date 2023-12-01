@@ -137,24 +137,26 @@ mod test {
 
     #[tokio::test]
     async fn pr_landed_in_master() {
-        let ctx = Rocketable::init().await;
-        let mut connection = ctx.connection().await.unwrap();
+        DatabaseContext::with(|ctx| async {
+            let mut connection = ctx.connection().await.unwrap();
 
-        let landing = Landing {
-            github_pr_number: 2134.try_into().unwrap(),
-            channel: store::Channel::new("nixos-unstable"),
-        };
+            let landing = Landing {
+                github_pr_number: 2134.try_into().unwrap(),
+                channel: store::Channel::new("nixos-unstable"),
+            };
 
-        landing.insert(&mut connection).await.unwrap();
+            landing.insert(&mut connection).await.unwrap();
 
-        let client = Client::tracked(ctx.rocket()).await.unwrap();
-        let response = client.get("/landed/github/2134").dispatch().await;
-        assert_eq!(response.status(), Status::Ok);
-        assert_eq!(
-            response.into_json::<LandedIn>().await.unwrap(),
-            LandedIn {
-                channels: vec![Channel("nixos-unstable".to_owned())]
-            }
-        );
+            let client = Client::tracked(ctx.rocket()).await.unwrap();
+            let response = client.get("/landed/github/2134").dispatch().await;
+            assert_eq!(response.status(), Status::Ok);
+            assert_eq!(
+                response.into_json::<LandedIn>().await.unwrap(),
+                LandedIn {
+                    channels: vec![Channel("nixos-unstable".to_owned())]
+                }
+            );
+        })
+        .await;
     }
 }
