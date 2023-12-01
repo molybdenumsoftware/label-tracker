@@ -30,7 +30,7 @@ impl DatabaseContext {
         sqlx::PgPool::connect(&url).await
     }
 
-    pub async fn init() -> Self {
+    async fn init() -> Self {
         let tmp_dir = tempfile::tempdir().unwrap();
         let sockets_dir = Self::sockets_dir(tmp_dir.path().try_into().unwrap());
         let data_dir = tmp_dir.path().join("data");
@@ -85,4 +85,6 @@ impl DatabaseContext {
             Self::PORT,
         )
     }
+
+    pub fn with(f: )
 }
