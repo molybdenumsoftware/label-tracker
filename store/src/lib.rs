@@ -84,6 +84,10 @@ impl Landing {
         ) -> sqlx::Result<BTreeSet<Channel>> {
             let pr_num: i32 = pr_num.into();
 
+            let record = sqlx::query!("SELECT count(*) from github_prs where number = $1", pr_num);
+            //<<< .fetch_one(&mut **txn)
+            //<<< .await?;
+
             let records = sqlx::query!(
                 "SELECT channel from landings where github_pr_number = $1",
                 pr_num,
