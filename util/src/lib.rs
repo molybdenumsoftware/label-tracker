@@ -86,7 +86,7 @@ impl DatabaseContext {
         )
     }
 
-    pub async fn with<T>(f: impl Fn(&Self) -> T) -> T {
+    pub async fn with<T>(f: impl FnOnce(&Self) -> T) -> T {
         let ctx = Self::init().await;
         let t = f(&ctx);
         drop(ctx);
