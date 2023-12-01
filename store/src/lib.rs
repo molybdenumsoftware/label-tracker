@@ -1,6 +1,6 @@
 #![warn(clippy::pedantic)]
 
-use std::{num::TryFromIntError, ops::Deref};
+use std::{num::TryFromIntError, ops::Deref, collections::BTreeSet};
 
 use futures::FutureExt;
 use sqlx::{migrate::Migrate, Acquire, Connection, FromRow, PgConnection, Postgres, Transaction};
@@ -89,7 +89,7 @@ impl Landing {
     pub async fn for_pr(
         connection: &mut PgConnection,
         pr: PrNumber,
-    ) -> Result<Vec<Channel>, ForPrError> {
+    ) -> Result<BTreeSet<Channel>, ForPrError> {
         let pr_num: i32 = pr.into();
 
         let records = sqlx::query!(
@@ -107,11 +107,12 @@ impl Landing {
         Ok(channels)
     }
 
-    pub async fn insert(
-        self,
-        connection: &mut PgConnection,
-        //<<< mut connection: impl sqlx::PgExecutor<'_> + Connection,
-    ) -> sqlx::Result<()> {
+    /// Inserts provided value into the database.
+    ///
+    /// # Errors
+    ///
+    /// See error type for details.
+    pub async fn insert(self, connection: &mut PgConnection) -> sqlx::Result<()> {
         async fn transaction(
             txn: &mut Transaction<'_, Postgres>,
             landing: Landing,
