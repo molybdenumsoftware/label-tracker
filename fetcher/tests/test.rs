@@ -5,8 +5,10 @@
 
 // TODO: consider asserting fixture repo state
 
-#[test]
-fn insert_prs() {
+use futures::FutureExt;
+
+#[tokio::test]
+async fn insert_prs() {
     let config = fetcher::Config {
         github_repo: "molybdenumsoftware/label-tracker-test-fixture"
             .parse()
@@ -14,16 +16,29 @@ fn insert_prs() {
     };
 
     let result: Result<(), String> = util::DatabaseContext::with(|context| {
-        fetcher::run(config);
-        todo!()
-        // Db should contain PRs listed above
-    }).await;
+        async move {
+            let mut connection = context.connection().await.unwrap();
+            fetcher::run(config, &mut connection);
+            let landings store::Landing::for_pr(&mut connection, pr_num)
+        }
+        .boxed()
+    })
+    .await;
+
+    result.unwrap();
 }
 
-#[test]
-fn update_pr() {
+#[tokio::test]
+async fn update_pr() {
     // Config {repo: test_repo}
     // DbContext {#1}
-    fetcher::run();
+    fetcher::run(config, context);
     // Db should contain PRs listed above
+    //
+    let result: Result<(), String> = util::DatabaseContext::with(|context| {
+        fetcher::run(config, context);
+        todo!()
+        // Db should contain PRs listed above
+    })
+    .await;
 }

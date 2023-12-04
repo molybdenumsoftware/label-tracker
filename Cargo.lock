@@ -678,6 +678,7 @@ checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
 name = "fetcher"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "graphql_client 0.13.0",
  "store",
  "tokio",
@@ -2645,6 +2646,7 @@ name = "store"
 version = "0.1.0"
 dependencies = [
  "futures",
+ "sqlx",
 ]
 
 [[package]]
