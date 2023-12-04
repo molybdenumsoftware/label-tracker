@@ -32,6 +32,21 @@ impl Pr {
 
         Ok(())
     }
+
+    /// Retrieves all [`Landings`]s.
+    ///
+    /// # Errors
+    ///
+    /// See error type for details.
+    ///
+    /// # Panics
+    ///
+    /// See [`sqlx::query!`].
+    pub async fn all(connection: &mut sqlx::PgConnection) -> Result<Vec<Pr>, sqlx::Error> {
+        sqlx::query_as!(Self, "SELECT * from prs")
+            .fetch_all(connection)
+            .await
+    }
 }
 
 #[derive(Debug)]
@@ -150,10 +165,8 @@ impl Landing {
     /// # Panics
     ///
     /// See [`sqlx::query!`].
-    pub async fn all(
-        connection: &mut sqlx::PgConnection,
-    ) -> Result<Vec<Landing>, sqlx::Error> {
-        sqlx::query_as!(Landing, "SELECT * from landings")
+    pub async fn all(connection: &mut sqlx::PgConnection) -> Result<Vec<Landing>, sqlx::Error> {
+        sqlx::query_as!(Self, "SELECT * from landings")
             .fetch_all(connection)
             .await
     }
@@ -170,9 +183,11 @@ impl Landing {
         ) -> sqlx::Result<()> {
             let pr_num: i32 = landing.github_pr_number.into();
 
-            sqlx::query!("INSERT INTO github_prs(number) VALUES ($1)", pr_num)
-                .execute(&mut **txn)
-                .await?;
+            let pr = Pr {
+                number: pr_num.into(),
+            };
+
+            pr.insert(&mut **txn).await?;
 
             sqlx::query!(
                 "INSERT INTO landings(github_pr_number, channel) VALUES ($1, $2)",

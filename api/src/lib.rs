@@ -2,8 +2,8 @@
 // required because rocket::routes, remove if clippy permits.
 #![allow(clippy::no_effect_underscore_binding)]
 
-use rocket::serde::{Serialize, Deserialize};
-use rocket_db_pools::{Database, Connection};
+use rocket::serde::{Deserialize, Serialize};
+use rocket_db_pools::{Connection, Database};
 
 #[must_use]
 pub fn app() -> rocket::fairing::AdHoc {
@@ -19,7 +19,10 @@ pub fn app() -> rocket::fairing::AdHoc {
 struct Data(sqlx::Pool<sqlx::Postgres>);
 
 #[rocket::get("/landed/github/<pr>")]
-async fn landed(mut db: Connection<Data>, pr: u32) -> Result<rocket::serde::json::Json<LandedIn> , LandedError> {
+async fn landed(
+    mut db: Connection<Data>,
+    pr: u32,
+) -> Result<rocket::serde::json::Json<LandedIn>, LandedError> {
     let landings = store::Landing::for_pr(&mut db, pr.try_into()?).await?;
 
     let channels = landings
@@ -66,17 +69,23 @@ impl From<store::ForPrError> for LandedError {
 impl<'r, 'o: 'r> rocket::response::Responder<'r, 'o> for LandedError {
     fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'o> {
         match self {
-            LandedError::PrNumberTooLarge => {
-                rocket::response::status::BadRequest(rocket::response::content::RawText("Pull request number too large.")).respond_to(request)
-            }
+            LandedError::PrNumberTooLarge => rocket::response::status::BadRequest(
+                rocket::response::content::RawText("Pull request number too large."),
+            )
+            .respond_to(request),
             LandedError::ForPr(for_pr_error) => match for_pr_error {
                 store::ForPrError::Sqlx(_sqlx_error) => {
                     let status = rocket::http::Status::from_code(500).unwrap();
-                    rocket::response::status::Custom(status, rocket::response::content::RawText("Error. Sorry.")).respond_to(request)
+                    rocket::response::status::Custom(
+                        status,
+                        rocket::response::content::RawText("Error. Sorry."),
+                    )
+                    .respond_to(request)
                 }
-                store::ForPrError::PrNotFound => {
-                    rocket::response::status::NotFound(rocket::response::content::RawText("Pull request not found.")).respond_to(request)
-                }
+                store::ForPrError::PrNotFound => rocket::response::status::NotFound(
+                    rocket::response::content::RawText("Pull request not found."),
+                )
+                .respond_to(request),
             },
         }
     }
