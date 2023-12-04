@@ -7,6 +7,11 @@
 
 use futures::FutureExt;
 
+async fn assert_landings(connection: &mut store::PgConnection)  {
+    let landings = store::Landing::for_pr(&mut connection, 1.try_into().unwrap()).await.unwrap();
+    
+}
+
 #[tokio::test]
 async fn insert_prs() {
     let config = fetcher::Config {
@@ -19,7 +24,6 @@ async fn insert_prs() {
         async move {
             let mut connection = context.connection().await.unwrap();
             fetcher::run(config, &mut connection);
-            let landings store::Landing::for_pr(&mut connection, pr_num)
         }
         .boxed()
     })
