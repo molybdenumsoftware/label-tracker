@@ -8,9 +8,12 @@
 use futures::FutureExt;
 
 async fn assert_landings(connection: &mut store::PgConnection) {
-    let landings = store::Landing::for_pr(&mut connection, 1.try_into().unwrap())
+    let mut landings = store::Landing::all(connection)
         .await
         .unwrap();
+    landings.sort();
+    assert_eq!(landings, [
+        store::Landing{github_pr_number: store::PrNumber::from(1), channel: store::Channel("channel1".into())}    ])
 }
 
 #[tokio::test]

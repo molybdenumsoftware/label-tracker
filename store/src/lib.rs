@@ -5,7 +5,7 @@ use sqlx::Connection;
 
 pub use sqlx::PgConnection;
 
-#[derive(Debug)]
+#[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PrNumber(pub i32);
 
 #[derive(sqlx::FromRow)]
@@ -57,13 +57,13 @@ impl From<PrNumber> for i32 {
     }
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Landing {
     pub github_pr_number: PrNumber,
     pub channel: Channel,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From)]
 pub struct Channel(String);
 
 impl Channel {
@@ -103,11 +103,11 @@ impl Landing {
     pub async fn for_pr(
         connection: &mut sqlx::PgConnection,
         pr_num: PrNumber,
-    ) -> Result<std::collections::BTreeSet<Channel>, ForPrError> {
+    ) -> Result<Vec<Channel>, ForPrError> {
         async fn transaction(
             txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
             pr_num: PrNumber,
-        ) -> Result<std::collections::BTreeSet<Channel>, ForPrError> {
+        ) -> Result<Vec<Channel>, ForPrError> {
             let pr_num: i32 = pr_num.into();
 
             let exists = sqlx::query!("SELECT 1 as pr from github_prs where number = $1", pr_num)
@@ -141,13 +141,21 @@ impl Landing {
         Ok(channels)
     }
 
+    /// Retrieves all [`Landings`]s.
+    ///
+    /// # Errors
+    ///
+    /// See error type for details.
+    ///
+    /// # Panics
+    ///
+    /// See [`sqlx::query!`].
     pub async fn all(
         connection: &mut sqlx::PgConnection,
-    ) -> Result<std::collections::BTreeSet<Landing>, sqlx::Error> {
-        let foo = sqlx::query_as!(Landing, "SELECT * from landings")
+    ) -> Result<Vec<Landing>, sqlx::Error> {
+        sqlx::query_as!(Landing, "SELECT * from landings")
             .fetch_all(connection)
-            .await?;
-        todo!()
+            .await
     }
 
     /// Inserts provided value into the database.
