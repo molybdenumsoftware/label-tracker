@@ -13,6 +13,27 @@ pub struct Pr {
     pub number: PrNumber,
 }
 
+impl Pr {
+    /// Inserts provided value into the database.
+    ///
+    /// # Errors
+    ///
+    /// See error type for details.
+    ///
+    /// # Panics
+    ///
+    /// See [`sqlx::query!`].
+    pub async fn insert(self, connection: &mut PgConnection) -> sqlx::Result<()> {
+        let pr_num: i32 = self.number.into();
+
+        sqlx::query!("INSERT INTO github_prs(number) VALUES ($1)", pr_num)
+            .execute(&mut *connection)
+            .await?;
+
+        Ok(())
+    }
+}
+
 #[derive(Debug)]
 pub struct PrNumberTooLarge(TryFromIntError);
 

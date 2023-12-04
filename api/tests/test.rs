@@ -40,19 +40,23 @@ async fn pr_not_landed() {
         async {
             let mut connection = ctx.connection().await.unwrap();
 
-
-            store::Pr{number:123.try_into().unwrap()}.insert(&mut connection).await.unwrap();
+            store::Pr {
+                number: 123.try_into().unwrap(),
+            }
+            .insert(&mut connection)
+            .await
+            .unwrap();
 
             let client = rocket::local::asynchronous::Client::tracked(ctx.rocket())
                 .await
                 .unwrap();
-            let response = client.get("/landed/github/2134").dispatch().await;
+
+            let response = client.get("/landed/github/123").dispatch().await;
             assert_eq!(response.status(), rocket::http::Status::Ok);
+
             assert_eq!(
                 response.into_json::<api::LandedIn>().await.unwrap(),
-                api::LandedIn {
-                    channels: vec![api::Channel("nixos-unstable".to_owned())]
-                }
+                api::LandedIn { channels: vec![] }
             );
         }
         .boxed()
