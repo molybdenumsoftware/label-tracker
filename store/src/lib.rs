@@ -141,9 +141,13 @@ impl Landing {
         Ok(channels)
     }
 
-    pub async fn all(connection: &mut sqlx::PgConnection) -> Result<std::collections::BTreeSet<Landing>, sqlx::Error> {
-        sqlx::query!("SELECT * from landings").fetch_all(connection).await
-        
+    pub async fn all(
+        connection: &mut sqlx::PgConnection,
+    ) -> Result<std::collections::BTreeSet<Landing>, sqlx::Error> {
+        let foo = sqlx::query_as!(Landing, "SELECT * from landings")
+            .fetch_all(connection)
+            .await?;
+        todo!()
     }
 
     /// Inserts provided value into the database.
