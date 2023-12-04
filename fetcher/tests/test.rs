@@ -43,12 +43,11 @@ async fn assert_landings(connection: &mut store::PgConnection) {
     );
 }
 
-fn config() -> fetcher::Config {
-    fetcher::Config {
-        github_repo: "molybdenumsoftware/label-tracker-test-fixture"
-            .parse()
-            .unwrap(),
-    }}
+fn github_repo() -> fetcher::GitHubRepo {
+    "molybdenumsoftware/label-tracker-test-fixture"
+        .parse()
+        .unwrap()
+}
 
 #[tokio::test]
 async fn insert_prs() {
@@ -56,7 +55,7 @@ async fn insert_prs() {
         async move {
             let mut connection = context.connection().await.unwrap();
 
-            fetcher::run(config(), &mut connection);
+            fetcher::run(&github_repo(), &mut connection);
 
             assert_landings(&mut connection).await;
         }
@@ -70,9 +69,12 @@ async fn update_pr() {
     util::DatabaseContext::with(|context| {
         async move {
             let mut connection = context.connection().await.unwrap();
-            store::Pr{number: 1.into()}.insert(&mut connection).await.unwrap();
+            store::Pr { number: 1.into() }
+                .insert(&mut connection)
+                .await
+                .unwrap();
 
-            fetcher::run(config(), &mut connection);
+            fetcher::run(&github_repo(), &mut connection);
 
             assert_landings(&mut connection).await;
         }
