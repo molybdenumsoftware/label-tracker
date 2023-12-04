@@ -3,11 +3,16 @@
 // #2: master
 // #3:
 
+// TODO: consider asserting fixture repo state
+
 #[test]
 fn insert_prs() {
-    // Config {repo: test_repo}
-    // DbContext {}
-    fetcher::run();
+    let config = fetcher::Config {github_repo: "".parse().unwrap()};
+    util::DatabaseContext::with(|context| 
+        {
+            
+    fetcher::run(config);
+        })
     // Db should contain PRs listed above
 }
 

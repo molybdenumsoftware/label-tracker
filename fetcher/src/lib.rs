@@ -13,8 +13,14 @@ impl std::str::FromStr for GitHubRepo {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.split_once('/')
+        let (ower, repo) = s.split_once('/').ok_or_else(|| String::from("GitHub repo must contain `/`"))?;
+        if repo.contains('/') {
+            return Err(String::from("GitHub repo must only contain one `/`"))
+        }
+        Ok(Self { owner: ower.to_owned() , repo: repo.to_owned()  })
     }
 }
 
-pub fn run(config: Config, db_context: util::DatabaseContext) {}
+pub fn run(config: Config, db_context: util::DatabaseContext) {
+    
+}
