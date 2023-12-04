@@ -7,13 +7,17 @@
 
 #[test]
 fn insert_prs() {
-    let config = fetcher::Config {github_repo: "".parse().unwrap()};
-    util::DatabaseContext::with(|context| 
-        {
-            
-    fetcher::run(config);
-        })
-    // Db should contain PRs listed above
+    let config = fetcher::Config {
+        github_repo: "molybdenumsoftware/label-tracker-test-fixture"
+            .parse()
+            .unwrap(),
+    };
+
+    let result: Result<(), String> = util::DatabaseContext::with(|context| {
+        fetcher::run(config);
+        todo!()
+        // Db should contain PRs listed above
+    }).await;
 }
 
 #[test]

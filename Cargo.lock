@@ -680,6 +680,7 @@ version = "0.1.0"
 dependencies = [
  "graphql_client 0.13.0",
  "store",
+ "tokio",
  "util",
 ]
 

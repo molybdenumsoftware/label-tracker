@@ -1,14 +1,12 @@
 #![warn(clippy::pedantic)]
 
-use std::{collections::BTreeSet, num::TryFromIntError};
-
 use futures::FutureExt;
-use sqlx::{Connection, FromRow, PgConnection, Postgres, Transaction};
+use sqlx::Connection;
 
 #[derive(Debug)]
 pub struct PrNumber(pub i32);
 
-#[derive(FromRow)]
+#[derive(sqlx::FromRow)]
 pub struct Pr {
     pub number: PrNumber,
 }
@@ -23,7 +21,7 @@ impl Pr {
     /// # Panics
     ///
     /// See [`sqlx::query!`].
-    pub async fn insert(self, connection: &mut PgConnection) -> sqlx::Result<()> {
+    pub async fn insert(self, connection: &mut sqlx::PgConnection) -> sqlx::Result<()> {
         let pr_num: i32 = self.number.into();
 
         sqlx::query!("INSERT INTO github_prs(number) VALUES ($1)", pr_num)
@@ -35,10 +33,10 @@ impl Pr {
 }
 
 #[derive(Debug)]
-pub struct PrNumberTooLarge(TryFromIntError);
+pub struct PrNumberTooLarge(std::num::TryFromIntError);
 
-impl From<TryFromIntError> for PrNumberTooLarge {
-    fn from(value: TryFromIntError) -> Self {
+impl From<std::num::TryFromIntError> for PrNumberTooLarge {
+    fn from(value: std::num::TryFromIntError) -> Self {
         Self(value)
     }
 }
@@ -57,7 +55,7 @@ impl From<PrNumber> for i32 {
     }
 }
 
-#[derive(FromRow)]
+#[derive(sqlx::FromRow)]
 pub struct Landing {
     pub github_pr_number: PrNumber,
     pub channel: Channel,
@@ -101,13 +99,13 @@ impl Landing {
     ///
     /// See [`sqlx::query!`].
     pub async fn for_pr(
-        connection: &mut PgConnection,
+        connection: &mut sqlx::PgConnection,
         pr_num: PrNumber,
-    ) -> Result<BTreeSet<Channel>, ForPrError> {
+    ) -> Result<std::collections::BTreeSet<Channel>, ForPrError> {
         async fn transaction(
-            txn: &mut Transaction<'_, Postgres>,
+            txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
             pr_num: PrNumber,
-        ) -> Result<BTreeSet<Channel>, ForPrError> {
+        ) -> Result<std::collections::BTreeSet<Channel>, ForPrError> {
             let pr_num: i32 = pr_num.into();
 
             let exists = sqlx::query!("SELECT 1 as pr from github_prs where number = $1", pr_num)
@@ -146,9 +144,9 @@ impl Landing {
     /// # Errors
     ///
     /// See error type for details.
-    pub async fn insert(self, connection: &mut PgConnection) -> sqlx::Result<()> {
+    pub async fn insert(self, connection: &mut sqlx::PgConnection) -> sqlx::Result<()> {
         async fn transaction(
-            txn: &mut Transaction<'_, Postgres>,
+            txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
             landing: Landing,
         ) -> sqlx::Result<()> {
             let pr_num: i32 = landing.github_pr_number.into();

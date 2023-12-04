@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 graphql_client = "0.13.0"
 store = { version = "0.1.0", path = "../store" }
+tokio = { version = "1.34.0", features = ["process", "macros", "rt", "rt-multi-thread"] }
 util = { version = "0.1.0", path = "../util" }
