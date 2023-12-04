@@ -6,6 +6,7 @@
 // TODO: consider asserting fixture repo state
 
 use futures::FutureExt;
+use store::Landing;
 
 async fn assert_landings(connection: &mut store::PgConnection) {
     let mut landings = store::Landing::all(connection).await.unwrap();
@@ -42,39 +43,40 @@ async fn assert_landings(connection: &mut store::PgConnection) {
     );
 }
 
-#[tokio::test]
-async fn insert_prs() {
-    let config = fetcher::Config {
+fn config() -> fetcher::Config {
+    fetcher::Config {
         github_repo: "molybdenumsoftware/label-tracker-test-fixture"
             .parse()
             .unwrap(),
-    };
+    }}
 
-    let result: Result<(), String> = util::DatabaseContext::with(|context| {
+#[tokio::test]
+async fn insert_prs() {
+    util::DatabaseContext::with(|context| {
         async move {
             let mut connection = context.connection().await.unwrap();
-            fetcher::run(config, &mut connection);
+
+            fetcher::run(config(), &mut connection);
+
             assert_landings(&mut connection).await;
-            Ok(())
         }
         .boxed()
     })
     .await;
-
-    result.unwrap();
 }
 
 #[tokio::test]
 async fn update_pr() {
-    // Config {repo: test_repo}
-    // DbContext {#1}
-    fetcher::run(config, context);
-    // Db should contain PRs listed above
-    //
-    let result: Result<(), String> = util::DatabaseContext::with(|context| {
-        fetcher::run(config, context);
-        todo!()
-        // Db should contain PRs listed above
+    util::DatabaseContext::with(|context| {
+        async move {
+            let mut connection = context.connection().await.unwrap();
+            store::Pr{number: 1.into()}.insert(&mut connection).await.unwrap();
+
+            fetcher::run(config(), &mut connection);
+
+            assert_landings(&mut connection).await;
+        }
+        .boxed()
     })
     .await;
 }

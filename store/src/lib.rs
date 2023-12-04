@@ -8,7 +8,7 @@ pub use sqlx::PgConnection;
 #[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PrNumber(pub i32);
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Pr {
     pub number: PrNumber,
 }
@@ -43,7 +43,7 @@ impl Pr {
     ///
     /// See [`sqlx::query!`].
     pub async fn all(connection: &mut sqlx::PgConnection) -> Result<Vec<Pr>, sqlx::Error> {
-        sqlx::query_as!(Self, "SELECT * from prs")
+        sqlx::query_as!(Self, "SELECT * from github_prs")
             .fetch_all(connection)
             .await
     }
@@ -187,7 +187,7 @@ impl Landing {
                 number: pr_num.into(),
             };
 
-            pr.insert(&mut **txn).await?;
+            pr.insert(txn).await?;
 
             sqlx::query!(
                 "INSERT INTO landings(github_pr_number, channel) VALUES ($1, $2)",
