@@ -3,22 +3,9 @@
 // required because rocket::launch, remove if clippy permits.
 #![allow(clippy::no_effect_underscore_binding)]
 
-use rocket::{
-    fairing::AdHoc,
-    http::Status,
-    launch,
-    response::{
-        content,
-        status::{BadRequest, Custom, NotFound},
-    },
-    serde::{json::Json, Deserialize, Serialize},
-};
+use rocket::launch;
+use api::app;
 
-use rocket_db_pools::{
-    sqlx::{self},
-    Connection, Database,
-};
-use store::{ForPrError, Landing, PrNumberTooLarge};
 
 #[launch]
 fn rocket() -> _ {
@@ -33,7 +20,7 @@ mod test {
     use store::Landing;
     use util::DatabaseContext;
 
-    use crate::{Channel, LandedIn};
+    use api::{Channel, LandedIn};
 
     trait Rocketable {
         fn rocket(&self) -> Rocket<rocket::Build>;
