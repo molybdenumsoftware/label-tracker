@@ -35,7 +35,33 @@ async fn pr_not_found() {
 }
 
 #[tokio::test]
-async fn pr_landed_in_master() {
+async fn pr_not_landed() {
+    util::DatabaseContext::with(|ctx| {
+        async {
+            let mut connection = ctx.connection().await.unwrap();
+
+
+            store::Pr{number:123.try_into().unwrap()}.insert(&mut connection).await.unwrap();
+
+            let client = rocket::local::asynchronous::Client::tracked(ctx.rocket())
+                .await
+                .unwrap();
+            let response = client.get("/landed/github/2134").dispatch().await;
+            assert_eq!(response.status(), rocket::http::Status::Ok);
+            assert_eq!(
+                response.into_json::<api::LandedIn>().await.unwrap(),
+                api::LandedIn {
+                    channels: vec![api::Channel("nixos-unstable".to_owned())]
+                }
+            );
+        }
+        .boxed()
+    })
+    .await;
+}
+
+#[tokio::test]
+async fn pr_landed() {
     util::DatabaseContext::with(|ctx| {
         async {
             let mut connection = ctx.connection().await.unwrap();

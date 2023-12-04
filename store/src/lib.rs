@@ -6,7 +6,12 @@ use futures::FutureExt;
 use sqlx::{Connection, FromRow, PgConnection, Postgres, Transaction};
 
 #[derive(Debug)]
-pub struct PrNumber(i32);
+pub struct PrNumber(pub i32);
+
+#[derive(FromRow)]
+pub struct Pr {
+    pub number: PrNumber,
+}
 
 #[derive(Debug)]
 pub struct PrNumberTooLarge(TryFromIntError);

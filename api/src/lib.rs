@@ -4,22 +4,6 @@
 
 use rocket::serde::{Serialize, Deserialize};
 use rocket_db_pools::{Database, Connection};
-// use rocket::{
-//     fairing::AdHoc,
-//     http::Status,
-//     launch,
-//     response::{
-//         content,
-//         status::{BadRequest, Custom, NotFound},
-//     },
-//     serde::{json::Json, Deserialize, Serialize},
-// };
-
-// use rocket_db_pools::{
-//     sqlx::{self},
-//     Connection, Database,
-// };
-// use store::{ForPrError, Landing, PrNumberTooLarge};
 
 #[must_use]
 pub fn app() -> rocket::fairing::AdHoc {
