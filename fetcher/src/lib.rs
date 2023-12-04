@@ -1,5 +1,7 @@
 #![warn(clippy::pedantic)]
 
+mod github;
+
 pub struct Config {
     pub github_repo: GitHubRepo,
 }
