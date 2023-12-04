@@ -3,6 +3,8 @@
 use futures::FutureExt;
 use sqlx::Connection;
 
+pub use sqlx::PgConnection;
+
 #[derive(Debug)]
 pub struct PrNumber(pub i32);
 

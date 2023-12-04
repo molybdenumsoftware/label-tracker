@@ -26,6 +26,6 @@ impl std::str::FromStr for GitHubRepo {
     }
 }
 
-pub fn run(config: Config, db_context: &mut sqlx::PgConnection) {
+pub fn run(config: Config, db_context: &mut store::PgConnection) {
     todo!()
 }
