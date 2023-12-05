@@ -9,12 +9,13 @@ pub use sqlx::PgConnection;
 pub struct PrNumber(pub i32);
 
 #[derive(Debug, derive_more::From, PartialEq, Eq)]
+#[from(forward)]
 pub struct GitCommit(pub String);
 
 #[derive(sqlx::FromRow, PartialEq, Eq, Debug)]
 pub struct Pr {
     pub number: PrNumber,
-    pub commit: GitCommit
+    pub commit: GitCommit,
 }
 
 impl PartialOrd for Pr {

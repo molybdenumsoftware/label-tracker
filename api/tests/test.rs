@@ -42,6 +42,7 @@ async fn pr_not_landed() {
 
             store::Pr {
                 number: 123.try_into().unwrap(),
+                commit: "deadbeef".into(),
             }
             .insert(&mut connection)
             .await

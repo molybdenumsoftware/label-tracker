@@ -36,9 +36,18 @@ async fn assert_landings(connection: &mut store::PgConnection) {
     assert_eq!(
         prs,
         [
-            store::Pr { number: 1.into() },
-            store::Pr { number: 2.into() },
-            store::Pr { number: 3.into() },
+            store::Pr {
+                number: 1.into(),
+                commit: "a".into()
+            },
+            store::Pr {
+                number: 2.into(),
+                commit: "b".into()
+            },
+            store::Pr {
+                number: 3.into(),
+                commit: "c".into()
+            },
         ]
     );
 }
@@ -69,10 +78,13 @@ async fn update_pr() {
     util::DatabaseContext::with(|context| {
         async move {
             let mut connection = context.connection().await.unwrap();
-            store::Pr { number: 1.into() }
-                .insert(&mut connection)
-                .await
-                .unwrap();
+            store::Pr {
+                number: 1.into(),
+                commit: "a".into(),
+            }
+            .insert(&mut connection)
+            .await
+            .unwrap();
 
             fetcher::run(&github_repo(), &mut connection);
 
