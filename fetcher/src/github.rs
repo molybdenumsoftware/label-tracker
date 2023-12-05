@@ -48,7 +48,7 @@ pub struct BranchContainsQuery {
 }
 
 impl ChunkedQuery for PullsQuery {
-    type Item = PullRequest;
+    type Item = store::Pr;
 
     fn change_after(&self, v: Self::Variables, after: Option<String>) -> Self::Variables {
         Self::Variables { after, ..v }
@@ -117,6 +117,59 @@ impl GitHub {
 
         Ok(Self { client })
     }
+    fn query_raw<Q>(&self, q: &Q, mut vars: <Q as GraphQLQuery>::Variables) -> Result<Vec<Q::Item>>
+    where
+        Q: ChunkedQuery + Debug,
+        Q::Variables: Clone + Debug,
+    {
+        let mut result = vec![];
+        let max_batch = 100;
+        let mut batch = max_batch;
 
+        loop {
+            vars = q.set_batch(batch, vars);
+
+            debug!("running query {:?} with {:?}", q, vars);
+            let started = chrono::Local::now();
+            let resp = post_graphql::<Q, _>(&self.client, API_URL, vars.clone())?;
+            let ended = chrono::Local::now();
+
+            // queries may time out. if that happens throttle the query once and try
+            // again, if that fails too we fail for good.
+            let resp = match resp.errors {
+                None => {
+                    // time limit is 10 seconds. if we're well under that, increase
+                    // the batch size again.
+                    if batch != max_batch && ended - started < Duration::seconds(8) {
+                        batch = (batch + batch / 10 + 1).min(max_batch);
+                        info!("increasing batch size to {}", batch);
+                    }
+                    resp
+                }
+                Some(e) if batch > 1 && e.iter().all(|e| e.message.contains("timeout")) => {
+                    warn!("throttling query due to timeout error: {:?}", e);
+                    // anything larger than 1 seems to be unreliable here
+                    batch = 1;
+                    info!("new batch size: {}", batch);
+                    continue;
+                }
+                Some(e) => bail!("query failed: {:?}", e),
+            };
+
+            match resp.data {
+                Some(d) => {
+                    let (mut items, cursor) = q.process(d)?;
+                    result.append(&mut items);
+                    match cursor {
+                        None => break,
+                        cursor => vars = q.change_after(vars, cursor),
+                    }
+                }
+                None => bail!("query returned no data"),
+            }
+        }
+
+        Ok(result)
+    }
     pub fn get_pulls(&self, repo: GitHubRepo) {}
 }

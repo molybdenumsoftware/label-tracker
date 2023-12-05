@@ -28,6 +28,4 @@ impl std::str::FromStr for GitHubRepo {
     }
 }
 
-pub fn run(github_repo: &GitHubRepo, db_context: &mut store::PgConnection) {
-
-}
+pub fn run(github_repo: &GitHubRepo, db_context: &mut store::PgConnection) {}
