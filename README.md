@@ -17,3 +17,26 @@ Nightly polling, fetching:
 where <interesting> means either a release branch or a channel, aka matches regex: "nixos-*"
 
 Future: faster detection of above via webhook
+
+
+1   2   3
+a   b   c
+*---*---* (master)
+     \
+      * (release-1)
+      3
+
+pr_merges
+=========
+columns:
+    - pr_num
+    - branch
+    - linear index in branch
+
+pr42 landed in master @1
+pr45 landed in master @3
+pr44 landed in release-1 @3
+
+fork_points
+===========
+release-1 forked from master @2
