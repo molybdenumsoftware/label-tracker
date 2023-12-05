@@ -8,9 +8,25 @@ pub use sqlx::PgConnection;
 #[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PrNumber(pub i32);
 
-#[derive(sqlx::FromRow, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Debug, derive_more::From, PartialEq, Eq)]
+pub struct GitCommit(pub String);
+
+#[derive(sqlx::FromRow, PartialEq, Eq, Debug)]
 pub struct Pr {
     pub number: PrNumber,
+    pub commit: GitCommit
+}
+
+impl PartialOrd for Pr {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.number.partial_cmp(&other.number)
+    }
+}
+
+impl Ord for Pr {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.number.cmp(&other.number)
+    }
 }
 
 impl Pr {
@@ -181,17 +197,9 @@ impl Landing {
             txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
             landing: Landing,
         ) -> sqlx::Result<()> {
-            let pr_num: i32 = landing.github_pr_number.into();
-
-            let pr = Pr {
-                number: pr_num.into(),
-            };
-
-            pr.insert(txn).await?;
-
             sqlx::query!(
                 "INSERT INTO landings(github_pr_number, channel) VALUES ($1, $2)",
-                pr_num,
+                landing.github_pr_number.0,
                 landing.channel.as_str(),
             )
             .execute(&mut **txn)

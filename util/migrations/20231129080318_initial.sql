@@ -1,5 +1,6 @@
 create table github_prs (
-    number int PRIMARY KEY
+    number int PRIMARY KEY,
+    commit varchar(40) not null
 );
 
 create table landings (
