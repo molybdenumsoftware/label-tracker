@@ -18,13 +18,16 @@ where <interesting> means either a release branch or a channel, aka matches rege
 
 Future: faster detection of above via webhook
 
-
-1   2   3
-a   b   c
-*---*---* (master)
-     \
-      * (release-1)
-      3
+PR42    PR45
+ 1    2   3
+ a    b   c
+ *----*---* (master)
+       \
+        * (release-1)
+        3
+       PR44
+         \
+          * (channel-1)
 
 pr_merges
 =========
@@ -39,4 +42,6 @@ pr44 landed in release-1 @3
 
 fork_points
 ===========
-release-1 forked from master @2
+(aka: latest common ancestor of branch1 and branch2)
+
+release-1 forked from (maybe don't need to know "from", just "at"?) master @2
