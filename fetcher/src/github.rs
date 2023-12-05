@@ -1,4 +1,7 @@
+use anyhow::{bail, Result};
 use graphql_client::GraphQLQuery;
+
+use crate::GitHubRepo;
 
 const API_URL: &str = "https://api.github.com/graphql";
 
@@ -33,15 +36,15 @@ pub struct BranchContainsQuery {
     since: Option<DateTime>,
 }
 
-impl Github {
-    pub fn new(api_token: &str, owner: &str, repo: &str, label: &str) -> Result<Self> {
+impl GitHub {
+    pub fn new(api_token: &str) -> Result<Self> {
         use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 
         let headers = match HeaderValue::from_str(&format!("Bearer {api_token}")) {
             Ok(h) => [(AUTHORIZATION, h)].into_iter().collect::<HeaderMap>(),
             Err(e) => bail!("invalid API token: {}", e),
         };
-        let client = reqwest::blocking::Client::builder()
+        let client = reqwest::Client::builder()
             .user_agent(format!(
                 "{}/{}",
                 env!("CARGO_PKG_NAME"),
@@ -49,11 +52,8 @@ impl Github {
             ))
             .default_headers(headers)
             .build()?;
-        Ok(Github {
-            client,
-            owner: owner.to_string(),
-            repo: repo.to_string(),
-            label: label.to_string(),
-        })
+        Ok(Self { client })
     }
+
+    pub fn get_pulls(&self, repo: GitHubRepo) {}
 }
