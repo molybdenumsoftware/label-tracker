@@ -6,8 +6,9 @@ Fetcher TODO:
 
 Nightly polling, fetching:
 
-1. newly merged pull requests {number, merge_commit}
-1. HEADs of new/updated tracked branches
+1. fetch HEADs of new/updated tracked branches
+1. create graph of those
+1. fetch pull requests newly merged {number, merge_commit}
     1. for each such HEAD,
 
 where <interesting> means either a release branch or a channel, aka matches regex: "nixos-*"
