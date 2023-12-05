@@ -18,15 +18,6 @@ pub struct Github {
     label: String,
 }
 
-trait ChunkedQuery: GraphQLQuery {
-    type Item;
-
-    fn change_after(&self, v: Self::Variables, after: Option<String>) -> Self::Variables;
-    fn set_batch(&self, batch: i64, v: Self::Variables) -> Self::Variables;
-
-    fn process(&self, d: Self::ResponseData) -> Result<(Vec<Self::Item>, Option<Cursor>)>;
-}
-
 #[derive(Debug, GraphQLQuery)]
 #[graphql(
     schema_path = "vendor/github.com/schema.docs.graphql",
