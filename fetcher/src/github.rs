@@ -44,6 +44,7 @@ impl GitHub {
             Ok(h) => [(AUTHORIZATION, h)].into_iter().collect::<HeaderMap>(),
             Err(e) => bail!("invalid API token: {}", e),
         };
+
         let client = reqwest::Client::builder()
             .user_agent(format!(
                 "{}/{}",
@@ -52,6 +53,7 @@ impl GitHub {
             ))
             .default_headers(headers)
             .build()?;
+
         Ok(Self { client })
     }
 
