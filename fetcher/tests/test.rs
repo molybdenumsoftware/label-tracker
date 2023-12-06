@@ -6,7 +6,7 @@
 // TODO: consider asserting fixture repo state
 
 use futures::FutureExt;
-use store::Landing;
+use store::{Landing, PrNumber};
 
 async fn assert_landings(connection: &mut store::PgConnection) {
     let mut landings = store::Landing::all(connection).await.unwrap();
@@ -14,7 +14,11 @@ async fn assert_landings(connection: &mut store::PgConnection) {
 
     assert_eq!(
         landings,
-        [(1, ["master", "channel1"])(2, ["master"]), (3, []),]
+        [
+            (PrNumber::try_from(1).unwrap(), [Channel::new("master"), "channel1"]),
+            (2, ["master"]),
+            (3, []),
+        ]
     );
 
     let mut prs = store::Pr::all(connection).await.unwrap();

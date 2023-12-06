@@ -178,7 +178,7 @@ impl Landing {
             }
 
             let records = sqlx::query_as!(Channel,
-                "SELECT channels.name, channels.number from landings, channels where landings.github_pr = $1 AND landings.channel = channels.number",
+                "SELECT channels.id, channels.name from landings, channels where landings.github_pr = $1 AND landings.channel = channels.id",
                 pr_num,
             )
             .fetch_all(&mut **txn)
