@@ -99,28 +99,34 @@ pub struct Landing {
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From)]
-pub struct Channel(String);
+pub struct Channel {number: ChannelNumber, name: String }
 
 impl Channel {
-    pub fn get_or_insert(
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    pub async fn get_or_insert(
         connection: &mut sqlx::PgConnection,
         s: impl AsRef<str>,
     ) -> sqlx::Result<Self> {
         async fn transaction(
-            s: &str,
+            s: String,
             txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
         ) -> sqlx::Result<Channel> {
-            todo!()
+            
         }
 
-        Ok(connection
-            .transaction(|txn| transaction(s, txn).boxed())
-            .await?)
+        let s = s.as_ref().to_owned();
+        connection
+            .transaction(move |txn| transaction(s, txn).boxed())
+            .await
     }
 
     #[must_use]
     pub fn as_str(&self) -> &str {
-        &self.0
+        &self.name.as_str()
     }
 }
 
@@ -166,17 +172,14 @@ impl Landing {
                 return Err(ForPrError::PrNotFound);
             }
 
-            let records = sqlx::query!(
-                "SELECT channels.name as channel from landings, channels where landings.github_pr = $1 AND landings.channel = channels.number",
+            let records = sqlx::query_as!(Channel,
+                "SELECT channels.name, channels.number from landings, channels where landings.github_pr = $1 AND landings.channel = channels.number",
                 pr_num,
             )
             .fetch_all(&mut **txn)
             .await?;
 
-            let channels = records
-                .into_iter()
-                .map(|record| Channel::new(record.channel))
-                .collect();
+            let channels = records;
 
             Ok(channels)
         }
