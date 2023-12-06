@@ -69,16 +69,18 @@ async fn pr_not_landed() {
 async fn pr_landed() {
     util::DatabaseContext::with(|ctx| {
         async {
-            let mut connection = ctx.connection().await.unwrap();
+            let connection = &mut ctx.connection().await.unwrap();
 
-            store::Channel::new("nixos-unstable").insert(&mut connection).await.unwrap();
+            store::Channel::get_or_insert(connection, "nixos-unstable")
+                .await
+                .unwrap();
 
             let landing = store::Landing {
                 github_pr: 2134.try_into().unwrap(),
                 channel: store::ChannelNumber(1),
             };
 
-            landing.insert(&mut connection).await.unwrap();
+            landing.insert(connection).await.unwrap();
 
             let client = rocket::local::asynchronous::Client::tracked(ctx.rocket())
                 .await

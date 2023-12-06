@@ -99,7 +99,10 @@ pub struct Landing {
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From)]
-pub struct Channel {number: ChannelNumber, name: String }
+pub struct Channel {
+    number: ChannelNumber,
+    name: String,
+}
 
 impl Channel {
     /// .
@@ -115,7 +118,10 @@ impl Channel {
             s: String,
             txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
         ) -> sqlx::Result<Channel> {
-            
+            let channel =
+                sqlx::query_as!(Channel, "SELECT * from channels WHERE name = $1", s);
+
+            todo!();
         }
 
         let s = s.as_ref().to_owned();
