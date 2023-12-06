@@ -58,29 +58,21 @@ impl ChunkedQuery for PullsQuery {
     }
 
     fn process(&self, d: Self::ResponseData) -> Result<(Vec<Self::Item>, Option<Cursor>)> {
-        debug!("rate limits: {:?}", d.rate_limit);
+        log::debug!("rate limits: {:?}", d.rate_limit);
         let prs = match d.repository {
             Some(r) => r.pull_requests,
             None => bail!("query returned no repo"),
         };
         // deliberately ignore all nulls. no idea why the schema doesn't make
         // all of these links mandatory, having them nullable makes no sense.
-        let infos: Vec<PullRequest> = prs
+        let infos: Vec<store::Pr> = prs
             .edges
             .unwrap_or_default()
             .into_iter()
             .filter_map(|e| e?.node)
-            .map(|n| PullRequest {
-                id: n.id,
-                title: n.title,
-                is_open: !n.closed,
-                is_merged: n.merged,
-                body: n.body_html,
-                last_update: n.updated_at,
-                url: n.url,
-                base_ref: n.base_ref_name,
-                merge_commit: n.merge_commit.map(|c| c.oid),
-                landed_in: BTreeSet::default(),
+            .map(|n| store::Pr {
+                number: n.,
+                commit: todo!(),
             })
             .collect();
         let cursor = match (self.since, infos.last()) {

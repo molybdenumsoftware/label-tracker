@@ -704,6 +704,7 @@ dependencies = [
  "chrono",
  "futures",
  "graphql_client 0.13.0",
+ "log",
  "reqwest",
  "serde",
  "store",

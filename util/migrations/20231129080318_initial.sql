@@ -4,7 +4,11 @@ create table github_prs (
 );
 
 create table landings (
-    github_pr_number int not null references github_prs(number)
-    ,
-    channel varchar(255) not null
+    github_pr int not null references github_prs(number),
+    channel int not null references channels(number)
 );
+
+create table channels (
+    number int PRIMARY KEY,
+    name varchar(255) not null
+)
