@@ -9,7 +9,7 @@ edition = "2021"
 anyhow = "1.0.75"
 chrono = "0.4.31"
 futures = "0.3.29"
-graphql_client = "0.13.0"
+graphql_client = { version = "0.13.0", features = ["reqwest"] }
 log = "0.4"
 reqwest = "0.11.22"
 serde = "1.0.193"

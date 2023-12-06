@@ -70,10 +70,16 @@ impl ChunkedQuery for PullsQuery {
             .unwrap_or_default()
             .into_iter()
             .filter_map(|e| e?.node)
-            .filter_map(|n| Some(store::Pr {
-                number: store::PrNumber(n.number.try_into().expect("pr should be less than i32::MAX")),
-                commit: store::GitCommit(n.merge_commit?.oid),
-            }))
+            .filter_map(|n| {
+                Some(store::Pr {
+                    number: store::PrNumber(
+                        n.number
+                            .try_into()
+                            .expect("pr should be less than i32::MAX"),
+                    ),
+                    commit: store::GitCommit(n.merge_commit?.oid),
+                })
+            })
             .collect();
         // TODO stop processing old prs
         // let cursor = match (self.since, infos.last()) {
@@ -110,7 +116,11 @@ impl GitHub {
 
         Ok(Self { client })
     }
-    fn query_raw<Q>(&self, q: &Q, mut vars: <Q as GraphQLQuery>::Variables) -> Result<Vec<Q::Item>>
+    async fn query_raw<Q>(
+        &self,
+        q: &Q,
+        mut vars: <Q as GraphQLQuery>::Variables,
+    ) -> Result<Vec<Q::Item>>
     where
         Q: ChunkedQuery + std::fmt::Debug,
         Q::Variables: Clone + std::fmt::Debug,
@@ -124,7 +134,9 @@ impl GitHub {
 
             log::debug!("running query {:?} with {:?}", q, vars);
             let started = chrono::Local::now();
-            let resp = graphql_client::reqwest::post_graphql::<Q, _>(&self.client, API_URL, vars.clone())?;
+            let resp =
+                graphql_client::reqwest::post_graphql::<Q, _>(&self.client, API_URL, vars.clone())
+                    .await?;
             let ended = chrono::Local::now();
 
             // queries may time out. if that happens throttle the query once and try
@@ -133,17 +145,17 @@ impl GitHub {
                 None => {
                     // time limit is 10 seconds. if we're well under that, increase
                     // the batch size again.
-                    if batch != max_batch && ended - started < Duration::seconds(8) {
+                    if batch != max_batch && ended - started < chrono::Duration::seconds(8) {
                         batch = (batch + batch / 10 + 1).min(max_batch);
-                        info!("increasing batch size to {}", batch);
+                        log::info!("increasing batch size to {}", batch);
                     }
                     resp
                 }
                 Some(e) if batch > 1 && e.iter().all(|e| e.message.contains("timeout")) => {
-                    warn!("throttling query due to timeout error: {:?}", e);
+                    log::warn!("throttling query due to timeout error: {:?}", e);
                     // anything larger than 1 seems to be unreliable here
                     batch = 1;
-                    info!("new batch size: {}", batch);
+                    log::info!("new batch size: {}", batch);
                     continue;
                 }
                 Some(e) => bail!("query failed: {:?}", e),
