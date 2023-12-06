@@ -205,7 +205,7 @@ impl Landing {
     /// # Panics
     ///
     /// See [`sqlx::query!`].
-    pub async fn all(connection: &mut sqlx::PgConnection) -> Result<Vec<Landing>, sqlx::Error> {
+    pub async fn all(connection: &mut sqlx::PgConnection) -> Result<Vec<Self>, sqlx::Error> {
         sqlx::query_as!(Self, "SELECT * from landings")
             .fetch_all(connection)
             .await
@@ -224,7 +224,7 @@ impl Landing {
             sqlx::query!(
                 "INSERT INTO landings(github_pr, channel) VALUES ($1, $2)",
                 landing.github_pr.0,
-                landing.channel.0,
+                landing.channel_id.0,
             )
             .execute(&mut **txn)
             .await?;
