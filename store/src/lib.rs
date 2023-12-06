@@ -95,7 +95,7 @@ impl From<PrNumber> for i32 {
 #[derive(sqlx::FromRow, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Landing {
     pub github_pr: PrNumber,
-    pub channel: ChannelId,
+    pub channel_id: ChannelId,
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From)]

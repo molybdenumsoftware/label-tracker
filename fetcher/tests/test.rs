@@ -15,7 +15,10 @@ async fn assert_landings(connection: &mut store::PgConnection) {
     assert_eq!(
         landings,
         [
-            (PrNumber::try_from(1).unwrap(), [Channel::new("master"), "channel1"]),
+            (
+                PrNumber::try_from(1).unwrap(),
+                [store::ChannelId::from(1), "channel1"]
+            ),
             (2, ["master"]),
             (3, []),
         ]
