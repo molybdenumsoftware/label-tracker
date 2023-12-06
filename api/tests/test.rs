@@ -71,13 +71,13 @@ async fn pr_landed() {
         async {
             let connection = &mut ctx.connection().await.unwrap();
 
-            store::Channel::get_or_insert(connection, "nixos-unstable")
+            let channel = store::Channel::get_or_insert(connection, "nixos-unstable")
                 .await
                 .unwrap();
 
             let landing = store::Landing {
                 github_pr: 2134.try_into().unwrap(),
-                channel: store::ChannelNumber(1),
+                channel: store::ChannelId(1),
             };
 
             landing.insert(connection).await.unwrap();
@@ -85,8 +85,10 @@ async fn pr_landed() {
             let client = rocket::local::asynchronous::Client::tracked(ctx.rocket())
                 .await
                 .unwrap();
+
             let response = client.get("/landed/github/2134").dispatch().await;
             assert_eq!(response.status(), rocket::http::Status::Ok);
+
             assert_eq!(
                 response.into_json::<api::LandedIn>().await.unwrap(),
                 api::LandedIn {

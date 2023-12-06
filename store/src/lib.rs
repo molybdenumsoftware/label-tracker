@@ -9,7 +9,7 @@ pub use sqlx::PgConnection;
 pub struct PrNumber(pub i32);
 
 #[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ChannelNumber(pub i32);
+pub struct ChannelId(pub i32);
 
 #[derive(Debug, derive_more::From, PartialEq, Eq)]
 #[from(forward)]
@@ -95,21 +95,21 @@ impl From<PrNumber> for i32 {
 #[derive(sqlx::FromRow, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Landing {
     pub github_pr: PrNumber,
-    pub channel: ChannelNumber,
+    pub channel: ChannelId,
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From)]
 pub struct Channel {
-    number: ChannelNumber,
+    id: ChannelId,
     name: String,
 }
 
 impl Channel {
-    /// .
+    /// Gets or inserts.
     ///
     /// # Errors
     ///
-    /// This function will return an error if .
+    /// See error type for details.
     pub async fn get_or_insert(
         connection: &mut sqlx::PgConnection,
         s: impl AsRef<str>,
@@ -118,8 +118,7 @@ impl Channel {
             s: String,
             txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
         ) -> sqlx::Result<Channel> {
-            let channel =
-                sqlx::query_as!(Channel, "SELECT * from channels WHERE name = $1", s);
+            let channel = sqlx::query_as!(Channel, "SELECT * from channels WHERE name = $1", s);
 
             todo!();
         }

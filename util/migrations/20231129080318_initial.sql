@@ -4,7 +4,7 @@ create table github_prs (
 );
 
 create table channels (
-    number serial PRIMARY KEY,
+    id serial PRIMARY KEY,
     name varchar(255) not null unique
 );
 
