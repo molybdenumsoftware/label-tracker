@@ -102,8 +102,20 @@ pub struct Landing {
 pub struct Channel(String);
 
 impl Channel {
-    pub fn new(s: impl AsRef<str>) -> Self {
-        Self(s.as_ref().to_string())
+    pub fn get_or_insert(
+        connection: &mut sqlx::PgConnection,
+        s: impl AsRef<str>,
+    ) -> sqlx::Result<Self> {
+        async fn transaction(
+            s: &str,
+            txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+        ) -> sqlx::Result<Channel> {
+            todo!()
+        }
+
+        Ok(connection
+            .transaction(|txn| transaction(s, txn).boxed())
+            .await?)
     }
 
     #[must_use]
