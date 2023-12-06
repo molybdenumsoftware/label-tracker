@@ -8,6 +8,9 @@ pub use sqlx::PgConnection;
 #[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PrNumber(pub i32);
 
+#[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ChannelNumber(pub i32);
+
 #[derive(Debug, derive_more::From, PartialEq, Eq)]
 #[from(forward)]
 pub struct GitCommit(pub String);
@@ -91,8 +94,8 @@ impl From<PrNumber> for i32 {
 
 #[derive(sqlx::FromRow, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Landing {
-    pub github_pr_number: PrNumber,
-    pub channel: Channel,
+    pub github_pr: PrNumber,
+    pub channel: ChannelNumber,
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From)]
@@ -152,7 +155,7 @@ impl Landing {
             }
 
             let records = sqlx::query!(
-                "SELECT channel from landings where github_pr_number = $1",
+                "SELECT channel.name from landings,channel where channel.github_pr = $1 AND landing.channels = ",
                 pr_num,
             )
             .fetch_all(&mut **txn)
@@ -199,9 +202,9 @@ impl Landing {
             landing: Landing,
         ) -> sqlx::Result<()> {
             sqlx::query!(
-                "INSERT INTO landings(github_pr_number, channel) VALUES ($1, $2)",
-                landing.github_pr_number.0,
-                landing.channel.as_str(),
+                "INSERT INTO landings(github_pr, channel) VALUES ($1, $2)",
+                landing.github_pr.0,
+                landing.channel.0,
             )
             .execute(&mut **txn)
             .await?;

@@ -5,13 +5,13 @@
     "columns": [
       {
         "ordinal": 0,
-        "name": "github_pr_number",
+        "name": "github_pr",
         "type_info": "Int4"
       },
       {
         "ordinal": 1,
         "name": "channel",
-        "type_info": "Varchar"
+        "type_info": "Int4"
       }
     ],
     "parameters": {

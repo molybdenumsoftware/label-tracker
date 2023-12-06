@@ -16,15 +16,15 @@ async fn assert_landings(connection: &mut store::PgConnection) {
         landings,
         [
             store::Landing {
-                github_pr_number: store::PrNumber::from(1),
+                github_pr: store::PrNumber::from(1),
                 channel: store::Channel::new("channel1")
             },
             store::Landing {
-                github_pr_number: store::PrNumber::from(1),
+                github_pr: store::PrNumber::from(1),
                 channel: store::Channel::new("master")
             },
             store::Landing {
-                github_pr_number: store::PrNumber::from(2),
+                github_pr: store::PrNumber::from(2),
                 channel: store::Channel::new("master")
             },
         ]

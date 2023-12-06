@@ -72,7 +72,7 @@ async fn pr_landed() {
             let mut connection = ctx.connection().await.unwrap();
 
             let landing = store::Landing {
-                github_pr_number: 2134.try_into().unwrap(),
+                github_pr: 2134.try_into().unwrap(),
                 channel: store::Channel::new("nixos-unstable"),
             };
 
