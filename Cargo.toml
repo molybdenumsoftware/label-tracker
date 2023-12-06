@@ -14,7 +14,7 @@ repository = "https://git.eno.space/label-tracker.git"
 anyhow = "1.0"
 chrono = { version = "0.4.19", default-features = false, features = [ "clock", "serde" ] }
 clap = { version = "3.1.18", features = [ "derive" ] }
-graphql_client = { version = "0.10", features = [ "reqwest-blocking" ] }
+graphql_client = { version = "0.10", features = ["reqwest-blocking", "reqwest"] }
 log = "0.4"
 pretty_env_logger = "0.4"
 regex = "1.6"

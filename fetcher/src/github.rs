@@ -70,22 +70,23 @@ impl ChunkedQuery for PullsQuery {
             .unwrap_or_default()
             .into_iter()
             .filter_map(|e| e?.node)
-            .map(|n| store::Pr {
-                number: n.,
-                commit: todo!(),
-            })
+            .filter_map(|n| Some(store::Pr {
+                number: store::PrNumber(n.number.try_into().expect("pr should be less than i32::MAX")),
+                commit: store::GitCommit(n.merge_commit?.oid),
+            }))
             .collect();
-        let cursor = match (self.since, infos.last()) {
-            (Some(since), Some(last)) if last.last_update < since => None,
-            _ => {
-                if prs.page_info.has_next_page {
-                    prs.page_info.end_cursor
-                } else {
-                    None
-                }
-            }
-        };
-        Ok((infos, cursor))
+        // TODO stop processing old prs
+        // let cursor = match (self.since, infos.last()) {
+        //     (Some(since), Some(last)) if last.last_update < since => None,
+        //     _ => {
+        //         if prs.page_info.has_next_page {
+        //             prs.page_info.end_cursor
+        //         } else {
+        //             None
+        //         }
+        //     }
+        // };
+        Ok((infos, prs.page_info.end_cursor))
     }
 }
 
@@ -111,8 +112,8 @@ impl GitHub {
     }
     fn query_raw<Q>(&self, q: &Q, mut vars: <Q as GraphQLQuery>::Variables) -> Result<Vec<Q::Item>>
     where
-        Q: ChunkedQuery + Debug,
-        Q::Variables: Clone + Debug,
+        Q: ChunkedQuery + std::fmt::Debug,
+        Q::Variables: Clone + std::fmt::Debug,
     {
         let mut result = vec![];
         let max_batch = 100;
@@ -121,9 +122,9 @@ impl GitHub {
         loop {
             vars = q.set_batch(batch, vars);
 
-            debug!("running query {:?} with {:?}", q, vars);
+            log::debug!("running query {:?} with {:?}", q, vars);
             let started = chrono::Local::now();
-            let resp = post_graphql::<Q, _>(&self.client, API_URL, vars.clone())?;
+            let resp = graphql_client::reqwest::post_graphql::<Q, _>(&self.client, API_URL, vars.clone())?;
             let ended = chrono::Local::now();
 
             // queries may time out. if that happens throttle the query once and try

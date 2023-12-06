@@ -13,6 +13,7 @@ query PullsQuery($owner: String!, $name: String!, $label: String!, $after: Strin
       }
       edges {
         node {
+          number
           id
           bodyHTML
           closed
