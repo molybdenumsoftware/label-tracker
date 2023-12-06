@@ -4,8 +4,8 @@ create table github_prs (
 );
 
 create table channels (
-    number int PRIMARY KEY,
-    name varchar(255) not null
+    number serial PRIMARY KEY,
+    name varchar(255) not null unique
 );
 
 create table landings (
