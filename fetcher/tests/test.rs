@@ -46,7 +46,7 @@ fn github_repo() -> fetcher::GitHubRepo {
 }
 
 #[tokio::test]
-async fn insert_prs() {
+async fn first_run() {
     util::DatabaseContext::with(|context| {
         async move {
             let mut connection = context.connection().await.unwrap();
@@ -61,7 +61,7 @@ async fn insert_prs() {
 }
 
 #[tokio::test]
-async fn update_pr() {
+async fn subsequent_run() {
     util::DatabaseContext::with(|context| {
         async move {
             let mut connection = context.connection().await.unwrap();
