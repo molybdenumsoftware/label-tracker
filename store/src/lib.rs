@@ -98,10 +98,9 @@ pub struct Landing {
     pub channel_id: ChannelId,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From, getset::Getters)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From)]
 pub struct Channel {
     id: ChannelId,
-    #[getset(get = "pub")]
     name: String,
 }
 
