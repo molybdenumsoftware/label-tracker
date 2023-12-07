@@ -53,6 +53,22 @@ impl Pr {
         Ok(())
     }
 
+    /// Bulk insert PRs
+    ///
+    /// # Errors
+    ///
+    /// See error type for details.
+    pub async fn bulk_insert(
+        connection: &mut sqlx::PgConnection,
+        prs: Vec<Self>,
+    ) -> sqlx::Result<()> {
+        // TODO: look into doing a real bulk insert with sqlx
+        for pr in prs {
+            pr.insert(connection).await?;
+        }
+        Ok(())
+    }
+
     /// Retrieves all [`Landings`]s.
     ///
     /// # Errors

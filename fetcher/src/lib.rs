@@ -33,10 +33,11 @@ impl std::str::FromStr for GitHubRepo {
 
 pub async fn run(
     github_repo: &GitHubRepo,
-    db_context: &mut store::PgConnection,
+    db_connection: &mut store::PgConnection,
     github_api_token: &str,
 ) -> Result<()> {
     let github_client = GitHub::new(github_api_token)?;
     let pulls = github_client.get_pulls(github_repo).await?;
+    store::Pr::bulk_insert(db_connection, pulls).await?;
     Ok(())
 }

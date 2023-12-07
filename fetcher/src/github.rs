@@ -188,7 +188,8 @@ impl GitHub {
                 after: None,
                 batch: 100,
             },
-        ).await?;
+        )
+        .await?;
         todo!()
     }
 }
