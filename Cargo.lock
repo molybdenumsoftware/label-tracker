@@ -701,6 +701,7 @@ name = "fetcher"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "camino",
  "chrono",
  "futures",
  "graphql_client 0.13.0",

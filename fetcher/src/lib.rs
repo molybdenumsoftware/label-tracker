@@ -3,6 +3,7 @@
 use crate::github::GitHub;
 
 mod github;
+mod repo;
 
 pub struct Config {
     pub github_repo: GitHubRepo,
@@ -39,9 +40,11 @@ pub async fn run(
     github_repo: &GitHubRepo,
     db_connection: &mut store::PgConnection,
     github_api_token: &str,
+    repo_path: &camino::Utf8Path,
 ) -> anyhow::Result<()> {
     let github_client = GitHub::new(github_api_token)?;
     let pulls = github_client.get_pulls(github_repo).await?;
     store::Pr::bulk_insert(db_connection, pulls).await?;
+    repo::fetch_or_clone(repo_path, github_repo).await?;
     Ok(())
 }
