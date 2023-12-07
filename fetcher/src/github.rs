@@ -70,15 +70,15 @@ impl ChunkedQuery for PullsQuery {
             .unwrap_or_default()
             .into_iter()
             .filter_map(|e| e?.node)
-            .filter_map(|n| {
-                Some(store::Pr {
+            .map(|n| {
+                store::Pr {
                     number: store::PrNumber(
                         n.number
                             .try_into()
                             .expect("pr should be less than i32::MAX"),
                     ),
-                    commit: store::GitCommit(n.merge_commit?.oid),
-                })
+                    commit: n.merge_commit.map(|commit| store::GitCommit(commit.oid)),
+                }
             })
             .collect();
         // TODO stop processing old prs
@@ -189,7 +189,6 @@ impl GitHub {
                 batch: 100,
             },
         )
-        .await?;
-        todo!()
+        .await
     }
 }

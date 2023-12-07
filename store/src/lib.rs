@@ -79,7 +79,10 @@ impl Pr {
     ///
     /// See [`sqlx::query!`].
     pub async fn all(connection: &mut sqlx::PgConnection) -> Result<Vec<Pr>, sqlx::Error> {
-        sqlx::query_as!(Self, "SELECT * from github_prs")
+        sqlx::query!("SELECT * from github_prs").map(|pr| Self {
+            number: pr.number.into(),
+            commit: pr.commit.map(Into::into),
+        })
             .fetch_all(connection)
             .await
     }

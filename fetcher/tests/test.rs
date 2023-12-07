@@ -79,7 +79,7 @@ async fn subsequent_run() {
             let mut connection = context.connection().await.unwrap();
             store::Pr {
                 number: 1.into(),
-                commit: "73da20569ac857daf6ed4eed70f2f691626b6df3".into(),
+                commit: Some("73da20569ac857daf6ed4eed70f2f691626b6df3".into())
             }
             .insert(&mut connection)
             .await
