@@ -5,10 +5,10 @@ use sqlx::Connection;
 
 pub use sqlx::PgConnection;
 
-#[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct PrNumber(pub i32);
 
-#[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct ChannelId(pub i32);
 
 #[derive(Debug, derive_more::From, PartialEq, Eq)]
@@ -50,7 +50,7 @@ impl Pr {
             ON CONFLICT (number) DO UPDATE SET commit=$2
             ",
             self.number.0,
-            self.commit.map(|c|c.0),
+            self.commit.map(|c| c.0),
         )
         .execute(&mut *connection)
         .await?;
@@ -157,10 +157,15 @@ impl Channel {
     pub async fn all(
         connection: &mut sqlx::PgConnection,
     ) -> sqlx::Result<std::collections::BTreeMap<ChannelId, Self>> {
-        sqlx::query_as!(Channel, "SELECT * FROM channels").fetch_all(connection);
-        todo!()
+        Ok(sqlx::query_as!(Channel, "SELECT * FROM channels")
+            .fetch_all(connection)
+            .await?
+            .into_iter()
+            .map(|channel| (channel.id, channel))
+            .collect())
     }
 
+    #[must_use]
     pub fn name(&self) -> &str {
         &self.name
     }
