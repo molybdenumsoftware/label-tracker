@@ -12,9 +12,18 @@ async fn assert_landings(connection: &mut store::PgConnection) {
     let mut landings = store::Landing::all(connection).await.unwrap();
     landings.sort();
 
+    let actual = landings
+        .into_iter()
+        .map(|landing| (landing.github_pr.into(), landing.channel_id))
+        .collect();
+
     assert_eq!(
-        landings,
-        [(1, ["master", "channel1"]), (2, ["master"]), (3, []),]
+        actual,
+        [
+            (1, vec!["master", "channel1"]),
+            (2, vec!["master"]),
+            (3, vec![]),
+        ]
     );
 
     let mut prs = store::Pr::all(connection).await.unwrap();
