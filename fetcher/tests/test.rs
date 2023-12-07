@@ -13,12 +13,15 @@ async fn assert_landings(connection: &mut store::PgConnection) {
     landings.sort();
     let all_channels = store::Channel::all(connection).await.unwrap();
 
-    let actual = landings.into_iter().map(|landing| {
-        (
-            landing.github_pr.into(),
-            all_channels.get(landing.channel_id).unwrap().name(),
-        )
-    });
+    let actual = landings
+        .into_iter()
+        .map(|landing| {
+            (
+                landing.github_pr.0,
+                all_channels.get(&landing.channel_id).unwrap().name(),
+            )
+        })
+        .collect::<Vec<_>>();
 
     assert_eq!(actual, [(1, "master"), (1, "channel1"), (2, "master"),]);
 
