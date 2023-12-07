@@ -98,9 +98,10 @@ pub struct Landing {
     pub channel_id: ChannelId,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From, getset::Getters)]
 pub struct Channel {
     id: ChannelId,
+    #[getset(get = "pub")]
     name: String,
 }
 
@@ -131,8 +132,9 @@ impl Channel {
 
     pub async fn all(
         connection: &mut sqlx::PgConnection,
-) -> sqlx::Result<std::collections::BTreeMap<ChannelId, Self>> {
-      todo!()
+    ) -> sqlx::Result<std::collections::BTreeMap<ChannelId, Self>> {
+        todo!()
+    }
 }
 
 pub enum ForPrError {

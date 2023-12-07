@@ -27,7 +27,7 @@ async fn landed(
 
     let channels = landings
         .into_iter()
-        .map(|channel| Channel::new(channel.as_str()))
+        .map(|channel| Channel::new(channel.name()))
         .collect();
 
     Ok(rocket::serde::json::Json(LandedIn { channels }))
