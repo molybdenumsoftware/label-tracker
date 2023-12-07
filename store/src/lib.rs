@@ -129,10 +129,10 @@ impl Channel {
             .await
     }
 
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        &self.name.as_str()
-    }
+    pub async fn all(
+        connection: &mut sqlx::PgConnection,
+) -> sqlx::Result<std::collections::BTreeMap<ChannelId, Self>> {
+      todo!()
 }
 
 pub enum ForPrError {

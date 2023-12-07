@@ -11,21 +11,16 @@ use store::{Landing, PrNumber};
 async fn assert_landings(connection: &mut store::PgConnection) {
     let mut landings = store::Landing::all(connection).await.unwrap();
     landings.sort();
+    let all_channels = store::Channel::all(connection).await.unwrap();
 
-    let actual = landings
-        .into_iter()
-        .map(|landing| (landing.github_pr.into(), landing.channel_id));
+    let actual = landings.into_iter().map(|landing| {
+        (
+            landing.github_pr.into(),
+            all_channels.get(landing.channel_id).unwrap().name(),
+        )
+    });
 
-    let channel_to_channel_id = store::Channels::all(connection).await.unwrap();
-
-    assert_eq!(
-        actual,
-        [
-            (1, channel_to_channel_id.get("master")),
-            (1, "channel1"),
-            (2, "master"),
-        ]
-    );
+    assert_eq!(actual, [(1, "master"), (1, "channel1"), (2, "master"),]);
 
     let mut prs = store::Pr::all(connection).await.unwrap();
     prs.sort();
