@@ -25,12 +25,12 @@ async fn landed(
 ) -> Result<rocket::serde::json::Json<LandedIn>, LandedError> {
     let landings = store::Landing::for_pr(&mut db, pr.try_into()?).await?;
 
-    let channels = landings
+    let branches = landings
         .into_iter()
-        .map(|channel| Branch::new(channel.name()))
+        .map(|branch| Branch::new(branch.name()))
         .collect();
 
-    Ok(rocket::serde::json::Json(LandedIn { channels }))
+    Ok(rocket::serde::json::Json(LandedIn { branches }))
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -46,7 +46,7 @@ impl Branch {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(crate = "rocket::serde")]
 pub struct LandedIn {
-    pub channels: Vec<Branch>,
+    pub branches: Vec<Branch>,
 }
 
 enum LandedError {

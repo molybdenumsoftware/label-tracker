@@ -53,11 +53,11 @@ in {
               description = "Name of the label.";
             };
 
-            channels = mkOption {
+            branches = mkOption {
               type = types.attrsOf (types.listOf types.str);
               description = ''
                 Branches to check for PR landing events (ie. changes of a
-                PR showing up in a given branch). Useful for channels.
+                PR showing up in a given branch). Useful for branches.
 
                 Branch names my regular expressions. Targets can refer to
                 captures in the base ref regex with $1, $2 etc.
@@ -109,7 +109,7 @@ in {
                 (concatStringsSep ","
                   (mapAttrsToList
                     (base: targets: "${base}:${concatStringsSep " " targets}")
-                    args.channels));
+                    args.branches));
             in ''
               (
                 umask 0077

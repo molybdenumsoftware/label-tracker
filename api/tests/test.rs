@@ -57,7 +57,7 @@ async fn pr_not_landed() {
 
             assert_eq!(
                 response.into_json::<api::LandedIn>().await.unwrap(),
-                api::LandedIn { channels: vec![] }
+                api::LandedIn { branches: vec![] }
             );
         }
         .boxed()
@@ -71,7 +71,7 @@ async fn pr_landed() {
         async {
             let connection = &mut ctx.connection().await.unwrap();
 
-            let channel = store::Branch::get_or_insert(connection, "nixos-unstable")
+            let branch = store::Branch::get_or_insert(connection, "nixos-unstable")
                 .await
                 .unwrap();
 
@@ -83,7 +83,7 @@ async fn pr_landed() {
 
             let landing = store::Landing {
                 github_pr: github_pr.number,
-                channel_id: channel.id(),
+                branch_id: branch.id(),
             };
 
             landing.insert(connection).await.unwrap();
@@ -98,7 +98,7 @@ async fn pr_landed() {
             assert_eq!(
                 response.into_json::<api::LandedIn>().await.unwrap(),
                 api::LandedIn {
-                    channels: vec![api::Branch("nixos-unstable".to_owned())]
+                    branches: vec![api::Branch("nixos-unstable".to_owned())]
                 }
             );
         }

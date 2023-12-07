@@ -1,5 +1,5 @@
 // PRs in fixture repository:
-// #1: master channel1
+// #1: master branch1
 // #2: master
 // #3:
 
@@ -10,19 +10,19 @@ use futures::FutureExt;
 async fn assert_landings(connection: &mut store::PgConnection) {
     let mut landings = store::Landing::all(connection).await.unwrap();
     landings.sort();
-    let all_channels = store::Branch::all(connection).await.unwrap();
+    let all_branches = store::Branch::all(connection).await.unwrap();
 
     let actual = landings
         .into_iter()
         .map(|landing| {
             (
                 landing.github_pr.0,
-                all_channels.get(&landing.channel_id).unwrap().name(),
+                all_branches.get(&landing.branch_id).unwrap().name(),
             )
         })
         .collect::<Vec<_>>();
 
-    assert_eq!(actual, [(1, "master"), (1, "channel1"), (2, "master"),]);
+    assert_eq!(actual, [(1, "master"), (1, "branch1"), (2, "master"),]);
 
     let mut prs = store::Pr::all(connection).await.unwrap();
     prs.sort();

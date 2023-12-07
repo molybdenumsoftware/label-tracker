@@ -120,7 +120,7 @@ impl From<PrNumber> for i32 {
 #[derive(sqlx::FromRow, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Landing {
     pub github_pr: PrNumber,
-    pub channel_id: BranchId,
+    pub branch_id: BranchId,
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From, getset::CopyGetters)]
@@ -144,15 +144,15 @@ impl Branch {
             name: String,
             txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
         ) -> sqlx::Result<Branch> {
-            let channel = sqlx::query_as!(Branch, "SELECT * from channels WHERE name = $1", name)
+            let branch = sqlx::query_as!(Branch, "SELECT * from branches WHERE name = $1", name)
                 .fetch_optional(&mut **txn)
                 .await?;
-            if let Some(channel) = channel {
-                Ok(channel)
+            if let Some(branch) = branch {
+                Ok(branch)
             } else {
                 sqlx::query_as!(
                     Branch,
-                    "INSERT INTO channels (name) VALUES ($1) RETURNING *",
+                    "INSERT INTO branches (name) VALUES ($1) RETURNING *",
                     name
                 )
                 .fetch_one(&mut **txn)
@@ -174,11 +174,11 @@ impl Branch {
     pub async fn all(
         connection: &mut sqlx::PgConnection,
     ) -> sqlx::Result<std::collections::BTreeMap<BranchId, Self>> {
-        Ok(sqlx::query_as!(Branch, "SELECT * FROM channels")
+        Ok(sqlx::query_as!(Branch, "SELECT * FROM branches")
             .fetch_all(connection)
             .await?
             .into_iter()
-            .map(|channel| (channel.id, channel))
+            .map(|branch| (branch.id, branch))
             .collect())
     }
 
@@ -231,22 +231,22 @@ impl Landing {
             }
 
             let records = sqlx::query_as!(Branch,
-                "SELECT channels.id, channels.name from landings, channels where landings.github_pr = $1 AND landings.channel_id = channels.id",
+                "SELECT branches.id, branches.name from landings, branches where landings.github_pr = $1 AND landings.branch_id = branches.id",
                 pr_num,
             )
             .fetch_all(&mut **txn)
             .await?;
 
-            let channels = records;
+            let branches = records;
 
-            Ok(channels)
+            Ok(branches)
         }
 
-        let channels = connection
+        let branches = connection
             .transaction(|txn| transaction(txn, pr_num).boxed())
             .await?;
 
-        Ok(channels)
+        Ok(branches)
     }
 
     /// Retrieves all [`Landings`]s.
@@ -275,9 +275,9 @@ impl Landing {
             landing: Landing,
         ) -> sqlx::Result<()> {
             sqlx::query!(
-                "INSERT INTO landings(github_pr, channel_id) VALUES ($1, $2)",
+                "INSERT INTO landings(github_pr, branch_id) VALUES ($1, $2)",
                 landing.github_pr.0,
-                landing.channel_id.0,
+                landing.branch_id.0,
             )
             .execute(&mut **txn)
             .await?;
