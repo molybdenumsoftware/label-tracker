@@ -21,7 +21,9 @@ trait ChunkedQuery: GraphQLQuery {
 }
 
 type DateTime = chrono::DateTime<chrono::Utc>;
+#[allow(clippy::upper_case_acronyms)]
 type URI = String;
+#[allow(clippy::upper_case_acronyms)]
 type HTML = String;
 type GitObjectID = String;
 

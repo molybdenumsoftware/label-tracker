@@ -1,5 +1,6 @@
 #![warn(clippy::pedantic)]
 
+
 use futures::FutureExt;
 use sqlx::Connection;
 
@@ -138,23 +139,31 @@ impl Channel {
     /// See error type for details.
     pub async fn get_or_insert(
         connection: &mut sqlx::PgConnection,
-        s: impl AsRef<str>,
+        name: impl AsRef<str>,
     ) -> sqlx::Result<Self> {
         async fn transaction(
-            s: String,
+            name: String,
             txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
         ) -> sqlx::Result<Channel> {
-            let channel = sqlx::query_as!(Channel, "SELECT * from channels WHERE name = $1", s);
-
-            todo!();
+            let channel = sqlx::query_as!(Channel, "SELECT * from channels WHERE name = $1", name).fetch_optional(&mut **txn).await?;
+            if let Some(channel) = channel {
+                Ok(channel)
+            } else {
+                sqlx::query_as!(Channel, "INSERT INTO channels (name) VALUES ($1) RETURNING *", name).fetch_one(&mut **txn).await
+            }
         }
 
-        let s = s.as_ref().to_owned();
+        let s = name.as_ref().to_owned();
         connection
             .transaction(move |txn| transaction(s, txn).boxed())
             .await
     }
 
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
     pub async fn all(
         connection: &mut sqlx::PgConnection,
     ) -> sqlx::Result<std::collections::BTreeMap<ChannelId, Self>> {
