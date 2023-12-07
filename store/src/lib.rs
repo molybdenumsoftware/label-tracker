@@ -47,10 +47,10 @@ impl Pr {
         sqlx::query!(
             "
             INSERT INTO github_prs(number, commit) VALUES ($1, $2)
-            ON CONFLICT DO UPDATE SET commit=$2
+            ON CONFLICT (number) DO UPDATE SET commit=$2
             ",
             self.number.0,
-            self.commit.0,
+            self.commit.map(|c|c.0),
         )
         .execute(&mut *connection)
         .await?;
@@ -157,6 +157,7 @@ impl Channel {
     pub async fn all(
         connection: &mut sqlx::PgConnection,
     ) -> sqlx::Result<std::collections::BTreeMap<ChannelId, Self>> {
+        sqlx::query_as!(Channel, "SELECT * FROM channels").fetch_all(connection);
         todo!()
     }
 
