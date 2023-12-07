@@ -134,6 +134,10 @@ impl Channel {
     ) -> sqlx::Result<std::collections::BTreeMap<ChannelId, Self>> {
         todo!()
     }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 pub enum ForPrError {

@@ -1,5 +1,8 @@
 #![warn(clippy::pedantic)]
 
+use crate::github::GitHub;
+use anyhow::Result;
+
 mod github;
 
 pub struct Config {
@@ -28,6 +31,12 @@ impl std::str::FromStr for GitHubRepo {
     }
 }
 
-pub fn run(github_repo: &GitHubRepo, db_context: &mut store::PgConnection) {
-  todo!()
+pub fn run(
+    github_repo: &GitHubRepo,
+    db_context: &mut store::PgConnection,
+    github_api_token: &str,
+) -> Result<()> {
+    let github_client = GitHub::new(github_api_token)?;
+
+    Ok(())
 }

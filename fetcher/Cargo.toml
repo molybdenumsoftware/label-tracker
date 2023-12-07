@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
-chrono = "0.4.31"
+chrono = { version = "0.4.31", features = ["serde"] }
 futures = "0.3.29"
 graphql_client = { version = "0.13.0", features = ["reqwest"] }
 log = "0.4"

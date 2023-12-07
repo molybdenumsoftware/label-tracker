@@ -176,5 +176,19 @@ impl GitHub {
 
         Ok(result)
     }
-    pub fn get_pulls(&self, repo: GitHubRepo) {}
+
+    pub fn get_pulls(&self, repo: GitHubRepo) -> Result<Vec<store::Pr>> {
+        // Currently querying for all PRs ever. In the future, we'll likely want to paginate/be
+        // able to pick up where we left off.
+        self.query_raw(
+            &PullsQuery { since: None },
+            pulls_query::Variables {
+                owner: todo!(),
+                name: todo!(),
+                after: todo!(),
+                batch: todo!(),
+            },
+        );
+        todo!()
+    }
 }
