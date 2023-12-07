@@ -33,15 +33,15 @@ async fn assert_landings(connection: &mut store::PgConnection) {
         [
             store::Pr {
                 number: 1.into(),
-                commit: "a".into()
+                commit: Some("73da20569ac857daf6ed4eed70f2f691626b6df3".into())
             },
             store::Pr {
                 number: 2.into(),
-                commit: "b".into()
+                commit: Some("ab909e9f7125283acdd8f6e490ad5b9750f89c81".into())
             },
             store::Pr {
                 number: 3.into(),
-                commit: "c".into()
+                commit: None
             },
         ]
     );
@@ -53,13 +53,17 @@ fn github_repo() -> fetcher::GitHubRepo {
         .unwrap()
 }
 
+fn github_token() -> String {
+    std::env::var("GITHUB_TOKEN").expect("$GITHUB_TOKEN should be set")
+}
+
 #[tokio::test]
 async fn first_run() {
     util::DatabaseContext::with(|context| {
         async move {
             let mut connection = context.connection().await.unwrap();
 
-            fetcher::run(&github_repo(), &mut connection);
+            fetcher::run(&github_repo(), &mut connection, &github_token()).await.unwrap();
 
             assert_landings(&mut connection).await;
         }
@@ -75,13 +79,13 @@ async fn subsequent_run() {
             let mut connection = context.connection().await.unwrap();
             store::Pr {
                 number: 1.into(),
-                commit: "a".into(),
+                commit: "73da20569ac857daf6ed4eed70f2f691626b6df3".into(),
             }
             .insert(&mut connection)
             .await
             .unwrap();
 
-            fetcher::run(&github_repo(), &mut connection);
+            fetcher::run(&github_repo(), &mut connection, &github_token()).await.unwrap();
 
             assert_landings(&mut connection).await;
         }

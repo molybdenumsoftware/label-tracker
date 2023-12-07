@@ -18,7 +18,7 @@ pub struct GitCommit(pub String);
 #[derive(sqlx::FromRow, PartialEq, Eq, Debug)]
 pub struct Pr {
     pub number: PrNumber,
-    pub commit: GitCommit,
+    pub commit: Option<GitCommit>,
 }
 
 impl PartialOrd for Pr {

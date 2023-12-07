@@ -19,7 +19,7 @@
     },
     "nullable": [
       false,
-      false
+      true
     ]
   },
   "hash": "ef19d6f7b405ffb84ae9903f1b1aef96be748c3b9036bf7a7509722722a7c08a"

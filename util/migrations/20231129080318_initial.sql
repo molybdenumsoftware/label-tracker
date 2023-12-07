@@ -1,6 +1,6 @@
 create table github_prs (
     number int PRIMARY KEY,
-    commit varchar(40) not null
+    commit varchar(40)
 );
 
 create table channels (
