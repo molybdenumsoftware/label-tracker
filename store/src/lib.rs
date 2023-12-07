@@ -44,11 +44,16 @@ impl Pr {
     ///
     /// See [`sqlx::query!`].
     pub async fn insert(self, connection: &mut sqlx::PgConnection) -> sqlx::Result<()> {
-        let pr_num: i32 = self.number.into();
-
-        sqlx::query!("INSERT INTO github_prs(number) VALUES ($1) ON CONFLICT DO UPDATE", pr_num)
-            .execute(&mut *connection)
-            .await?;
+        sqlx::query!(
+            "
+            INSERT INTO github_prs(number, commit) VALUES ($1, $2)
+            ON CONFLICT DO UPDATE SET commit=$2
+            ",
+            self.number.0,
+            self.commit.0,
+        )
+        .execute(&mut *connection)
+        .await?;
 
         Ok(())
     }
@@ -79,10 +84,11 @@ impl Pr {
     ///
     /// See [`sqlx::query!`].
     pub async fn all(connection: &mut sqlx::PgConnection) -> Result<Vec<Pr>, sqlx::Error> {
-        sqlx::query!("SELECT * from github_prs").map(|pr| Self {
-            number: pr.number.into(),
-            commit: pr.commit.map(Into::into),
-        })
+        sqlx::query!("SELECT * from github_prs")
+            .map(|pr| Self {
+                number: pr.number.into(),
+                commit: pr.commit.map(Into::into),
+            })
             .fetch_all(connection)
             .await
     }
