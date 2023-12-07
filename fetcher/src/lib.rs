@@ -11,7 +11,7 @@ pub struct Config {
 
 pub struct GitHubRepo {
     owner: String,
-    repo: String,
+    name: String,
 }
 
 impl std::str::FromStr for GitHubRepo {
@@ -26,17 +26,17 @@ impl std::str::FromStr for GitHubRepo {
         }
         Ok(Self {
             owner: ower.to_owned(),
-            repo: repo.to_owned(),
+            name: repo.to_owned(),
         })
     }
 }
 
-pub fn run(
+pub async fn run(
     github_repo: &GitHubRepo,
     db_context: &mut store::PgConnection,
     github_api_token: &str,
 ) -> Result<()> {
     let github_client = GitHub::new(github_api_token)?;
-
+    let pulls = github_client.get_pulls(github_repo).await?;
     Ok(())
 }

@@ -1,4 +1,4 @@
-query PullsQuery($owner: String!, $name: String!, $after: String, $batch: Int!) {
+query PullsQuery($owner: String!, $name: String!, $label: String!, $after: String, $batch: Int!) {
   rateLimit {
     limit
     cost
@@ -6,13 +6,14 @@ query PullsQuery($owner: String!, $name: String!, $after: String, $batch: Int!) 
     resetAt
   }
   repository(owner: $owner, name: $name) {
-    pullRequests(first: $batch, after: $after, orderBy: { direction: DESC, field: UPDATED_AT }) {
+    pullRequests(first: $batch, after: $after, labels: [ $label ], orderBy: { direction: DESC, field: UPDATED_AT }) {
       pageInfo {
         endCursor
         hasNextPage
       }
       edges {
         node {
+          number
           id
           bodyHTML
           closed
