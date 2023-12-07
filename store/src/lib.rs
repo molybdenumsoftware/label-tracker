@@ -178,7 +178,7 @@ impl Landing {
             }
 
             let records = sqlx::query_as!(Channel,
-                "SELECT channels.id, channels.name from landings, channels where landings.github_pr = $1 AND landings.channel = channels.id",
+                "SELECT channels.id, channels.name from landings, channels where landings.github_pr = $1 AND landings.channel_id = channels.id",
                 pr_num,
             )
             .fetch_all(&mut **txn)
@@ -222,7 +222,7 @@ impl Landing {
             landing: Landing,
         ) -> sqlx::Result<()> {
             sqlx::query!(
-                "INSERT INTO landings(github_pr, channel) VALUES ($1, $2)",
+                "INSERT INTO landings(github_pr, channel_id) VALUES ($1, $2)",
                 landing.github_pr.0,
                 landing.channel_id.0,
             )

@@ -10,5 +10,5 @@ create table channels (
 
 create table landings (
     github_pr int not null references github_prs(number),
-    channel int not null references channels(id)
+    channel_id int not null references channels(id)
 );

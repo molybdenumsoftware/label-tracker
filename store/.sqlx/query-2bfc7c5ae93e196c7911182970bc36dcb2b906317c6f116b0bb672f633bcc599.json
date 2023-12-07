@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO landings(github_pr, channel) VALUES ($1, $2)",
+  "query": "INSERT INTO landings(github_pr, channel_id) VALUES ($1, $2)",
   "describe": {
     "columns": [],
     "parameters": {
@@ -11,5 +11,5 @@
     },
     "nullable": []
   },
-  "hash": "ad0b9c23dafc41969ab4b7f33ca8c1ae2dd42d673e55133157503b7442fb9c59"
+  "hash": "2bfc7c5ae93e196c7911182970bc36dcb2b906317c6f116b0bb672f633bcc599"
 }
