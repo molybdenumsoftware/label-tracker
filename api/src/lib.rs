@@ -27,7 +27,7 @@ async fn landed(
 
     let channels = landings
         .into_iter()
-        .map(|channel| Channel::new(channel.name()))
+        .map(|channel| Branch::new(channel.name()))
         .collect();
 
     Ok(rocket::serde::json::Json(LandedIn { channels }))
@@ -35,9 +35,9 @@ async fn landed(
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(crate = "rocket::serde")]
-pub struct Channel(pub String);
+pub struct Branch(pub String);
 
-impl Channel {
+impl Branch {
     pub fn new(s: impl AsRef<str>) -> Self {
         Self(s.as_ref().to_string())
     }
@@ -46,7 +46,7 @@ impl Channel {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(crate = "rocket::serde")]
 pub struct LandedIn {
-    pub channels: Vec<Channel>,
+    pub channels: Vec<Branch>,
 }
 
 enum LandedError {

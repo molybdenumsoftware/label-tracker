@@ -1,6 +1,5 @@
 #![warn(clippy::pedantic)]
 
-
 use futures::FutureExt;
 use sqlx::Connection;
 
@@ -10,13 +9,13 @@ pub use sqlx::PgConnection;
 pub struct PrNumber(pub i32);
 
 #[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
-pub struct ChannelId(i32);
+pub struct BranchId(i32);
 
-#[derive(Debug, derive_more::From, PartialEq, Eq)]
+#[derive(Debug, derive_more::From, PartialEq, Eq, Clone)]
 #[from(forward)]
 pub struct GitCommit(pub String);
 
-#[derive(sqlx::FromRow, PartialEq, Eq, Debug)]
+#[derive(sqlx::FromRow, PartialEq, Eq, Debug, Clone)]
 pub struct Pr {
     pub number: PrNumber,
     pub commit: Option<GitCommit>,
@@ -121,17 +120,17 @@ impl From<PrNumber> for i32 {
 #[derive(sqlx::FromRow, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Landing {
     pub github_pr: PrNumber,
-    pub channel_id: ChannelId,
+    pub channel_id: BranchId,
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From, getset::CopyGetters)]
-pub struct Channel {
+pub struct Branch {
     #[getset(get_copy = "pub")]
-    id: ChannelId,
+    id: BranchId,
     name: String,
 }
 
-impl Channel {
+impl Branch {
     /// Gets or inserts.
     ///
     /// # Errors
@@ -144,12 +143,20 @@ impl Channel {
         async fn transaction(
             name: String,
             txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
-        ) -> sqlx::Result<Channel> {
-            let channel = sqlx::query_as!(Channel, "SELECT * from channels WHERE name = $1", name).fetch_optional(&mut **txn).await?;
+        ) -> sqlx::Result<Branch> {
+            let channel = sqlx::query_as!(Branch, "SELECT * from channels WHERE name = $1", name)
+                .fetch_optional(&mut **txn)
+                .await?;
             if let Some(channel) = channel {
                 Ok(channel)
             } else {
-                sqlx::query_as!(Channel, "INSERT INTO channels (name) VALUES ($1) RETURNING *", name).fetch_one(&mut **txn).await
+                sqlx::query_as!(
+                    Branch,
+                    "INSERT INTO channels (name) VALUES ($1) RETURNING *",
+                    name
+                )
+                .fetch_one(&mut **txn)
+                .await
             }
         }
 
@@ -166,8 +173,8 @@ impl Channel {
     /// This function will return an error if .
     pub async fn all(
         connection: &mut sqlx::PgConnection,
-    ) -> sqlx::Result<std::collections::BTreeMap<ChannelId, Self>> {
-        Ok(sqlx::query_as!(Channel, "SELECT * FROM channels")
+    ) -> sqlx::Result<std::collections::BTreeMap<BranchId, Self>> {
+        Ok(sqlx::query_as!(Branch, "SELECT * FROM channels")
             .fetch_all(connection)
             .await?
             .into_iter()
@@ -195,7 +202,7 @@ impl From<sqlx::Error> for ForPrError {
 impl Landing {
     pub const TABLE: &str = "landings";
 
-    /// Retrieves all [`Channel`]s this PR has landed in.
+    /// Retrieves all [`Branch`]s this PR has landed in.
     ///
     /// # Errors
     ///
@@ -207,11 +214,11 @@ impl Landing {
     pub async fn for_pr(
         connection: &mut sqlx::PgConnection,
         pr_num: PrNumber,
-    ) -> Result<Vec<Channel>, ForPrError> {
+    ) -> Result<Vec<Branch>, ForPrError> {
         async fn transaction(
             txn: &mut sqlx::Transaction<'_, sqlx::Postgres>,
             pr_num: PrNumber,
-        ) -> Result<Vec<Channel>, ForPrError> {
+        ) -> Result<Vec<Branch>, ForPrError> {
             let pr_num: i32 = pr_num.into();
 
             let exists = sqlx::query!("SELECT 1 as pr from github_prs where number = $1", pr_num)
@@ -223,7 +230,7 @@ impl Landing {
                 return Err(ForPrError::PrNotFound);
             }
 
-            let records = sqlx::query_as!(Channel,
+            let records = sqlx::query_as!(Branch,
                 "SELECT channels.id, channels.name from landings, channels where landings.github_pr = $1 AND landings.channel_id = channels.id",
                 pr_num,
             )

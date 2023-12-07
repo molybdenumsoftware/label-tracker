@@ -71,12 +71,18 @@ async fn pr_landed() {
         async {
             let connection = &mut ctx.connection().await.unwrap();
 
-            let channel = store::Channel::get_or_insert(connection, "nixos-unstable")
+            let channel = store::Branch::get_or_insert(connection, "nixos-unstable")
                 .await
                 .unwrap();
 
+            let github_pr = store::Pr {
+                number: 2134.into(),
+                commit: Some("deadbeef".into()),
+            };
+            github_pr.clone().insert(connection).await.unwrap();
+
             let landing = store::Landing {
-                github_pr: 2134.try_into().unwrap(),
+                github_pr: github_pr.number,
                 channel_id: channel.id(),
             };
 
@@ -92,7 +98,7 @@ async fn pr_landed() {
             assert_eq!(
                 response.into_json::<api::LandedIn>().await.unwrap(),
                 api::LandedIn {
-                    channels: vec![api::Channel("nixos-unstable".to_owned())]
+                    channels: vec![api::Branch("nixos-unstable".to_owned())]
                 }
             );
         }

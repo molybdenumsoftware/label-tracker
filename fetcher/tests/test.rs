@@ -10,7 +10,7 @@ use futures::FutureExt;
 async fn assert_landings(connection: &mut store::PgConnection) {
     let mut landings = store::Landing::all(connection).await.unwrap();
     landings.sort();
-    let all_channels = store::Channel::all(connection).await.unwrap();
+    let all_channels = store::Branch::all(connection).await.unwrap();
 
     let actual = landings
         .into_iter()
