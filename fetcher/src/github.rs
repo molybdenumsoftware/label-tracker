@@ -38,17 +38,6 @@ pub struct PullsQuery {
     since: Option<DateTime>,
 }
 
-#[derive(Debug, GraphQLQuery)]
-#[graphql(
-    schema_path = "../vendor/github.com/schema.docs.graphql",
-    query_path = "src/queries/branch_contains.graphql",
-    response_derives = "Debug",
-    variables_derives = "Clone,Debug"
-)]
-pub struct BranchContainsQuery {
-    since: Option<DateTime>,
-}
-
 impl ChunkedQuery for PullsQuery {
     type Item = store::Pr;
 

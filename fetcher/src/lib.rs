@@ -1,7 +1,6 @@
 #![warn(clippy::pedantic)]
 
 use crate::github::GitHub;
-use anyhow::Result;
 
 mod github;
 
@@ -31,11 +30,16 @@ impl std::str::FromStr for GitHubRepo {
     }
 }
 
+/// Run the darn thing.
+///
+/// # Errors
+///
+/// IO that can fail includes database communication, GraphQL requests and git operations.
 pub async fn run(
     github_repo: &GitHubRepo,
     db_connection: &mut store::PgConnection,
     github_api_token: &str,
-) -> Result<()> {
+) -> anyhow::Result<()> {
     let github_client = GitHub::new(github_api_token)?;
     let pulls = github_client.get_pulls(github_repo).await?;
     store::Pr::bulk_insert(db_connection, pulls).await?;

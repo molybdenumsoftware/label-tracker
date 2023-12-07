@@ -6,7 +6,6 @@
 // TODO: consider asserting fixture repo state
 
 use futures::FutureExt;
-use store::{Landing, PrNumber};
 
 async fn assert_landings(connection: &mut store::PgConnection) {
     let mut landings = store::Landing::all(connection).await.unwrap();
@@ -63,7 +62,9 @@ async fn first_run() {
         async move {
             let mut connection = context.connection().await.unwrap();
 
-            fetcher::run(&github_repo(), &mut connection, &github_token()).await.unwrap();
+            fetcher::run(&github_repo(), &mut connection, &github_token())
+                .await
+                .unwrap();
 
             assert_landings(&mut connection).await;
         }
@@ -79,13 +80,15 @@ async fn subsequent_run() {
             let mut connection = context.connection().await.unwrap();
             store::Pr {
                 number: 1.into(),
-                commit: Some("73da20569ac857daf6ed4eed70f2f691626b6df3".into())
+                commit: Some("73da20569ac857daf6ed4eed70f2f691626b6df3".into()),
             }
             .insert(&mut connection)
             .await
             .unwrap();
 
-            fetcher::run(&github_repo(), &mut connection, &github_token()).await.unwrap();
+            fetcher::run(&github_repo(), &mut connection, &github_token())
+                .await
+                .unwrap();
 
             assert_landings(&mut connection).await;
         }
