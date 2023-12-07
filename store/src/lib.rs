@@ -46,7 +46,7 @@ impl Pr {
     pub async fn insert(self, connection: &mut sqlx::PgConnection) -> sqlx::Result<()> {
         let pr_num: i32 = self.number.into();
 
-        sqlx::query!("INSERT INTO github_prs(number) VALUES ($1)", pr_num)
+        sqlx::query!("INSERT INTO github_prs(number) VALUES ($1) ON CONFLICT DO UPDATE", pr_num)
             .execute(&mut *connection)
             .await?;
 
