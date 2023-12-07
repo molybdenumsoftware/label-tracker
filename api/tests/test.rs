@@ -77,7 +77,7 @@ async fn pr_landed() {
 
             let landing = store::Landing {
                 github_pr: 2134.try_into().unwrap(),
-                channel_id: store::ChannelId(1409124912 ads asd f41),
+                channel_id: channel.id(),
             };
 
             landing.insert(connection).await.unwrap();

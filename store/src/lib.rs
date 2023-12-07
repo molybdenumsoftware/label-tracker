@@ -9,7 +9,7 @@ pub use sqlx::PgConnection;
 pub struct PrNumber(pub i32);
 
 #[derive(Debug, derive_more::From, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
-pub struct ChannelId(pub i32);
+pub struct ChannelId(i32);
 
 #[derive(Debug, derive_more::From, PartialEq, Eq)]
 #[from(forward)]
@@ -123,8 +123,9 @@ pub struct Landing {
     pub channel_id: ChannelId,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, derive_more::From, getset::CopyGetters)]
 pub struct Channel {
+    #[getset(get_copy = "pub")]
     id: ChannelId,
     name: String,
 }
