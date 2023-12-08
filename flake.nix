@@ -21,15 +21,17 @@
       ;
 
     forEachDefaultSystem = system: let
-      darwinBuildInputs =
+      buildInputs =
         if hasSuffix "-darwin" system
-        then [pkgs.darwin.apple_sdk.frameworks.SystemConfiguration]
-        else [];
+        then with pkgs; [darwin.apple_sdk.frameworks.SystemConfiguration]
+        else if hasSuffix "-linux" system
+        then with pkgs; [pkg-config openssl]
+        else throw "unsupported";
       pkgs = nixpkgs.legacyPackages.${system};
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
       util = bin: pkgs.writeShellScriptBin "util-${bin}" "cargo run --package util --bin ${bin}";
-      packages.fetcher = pkgs.callPackage ./fetcher.nix {inherit darwinBuildInputs;};
-      packages.api = pkgs.callPackage ./api.nix {inherit darwinBuildInputs;};
+      packages.fetcher = pkgs.callPackage ./fetcher.nix {inherit buildInputs;};
+      packages.api = pkgs.callPackage ./api.nix {inherit buildInputs;};
     in {
       devShells.default = pkgs.mkShell {
         inputsFrom = attrValues packages;

@@ -1,7 +1,7 @@
 {
   rustPlatform,
   postgresql,
-  darwinBuildInputs,
+  buildInputs,
 }:
 rustPlatform.buildRustPackage {
   name = "api";
@@ -9,5 +9,5 @@ rustPlatform.buildRustPackage {
   src = ./.;
   buildAndTestSubdir = "api";
   checkInputs = [postgresql];
-  buildInputs = darwinBuildInputs;
+  inherit buildInputs;
 }
