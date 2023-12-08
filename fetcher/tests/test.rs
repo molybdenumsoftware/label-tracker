@@ -66,9 +66,15 @@ async fn first_run() {
             let tempdir_path: &camino::Utf8Path = repo_tempdir.path().try_into().unwrap();
             let repo_path = tempdir_path.join("repo");
 
-            fetcher::run(&github_repo(), &mut connection, &github_token(), &repo_path)
-                .await
-                .unwrap();
+            fetcher::run(
+                &github_repo(),
+                &mut connection,
+                &github_token(),
+                &repo_path,
+                &vec![wildmatch::WildMatch::new("*")],
+            )
+            .await
+            .unwrap();
 
             drop(repo_tempdir);
 

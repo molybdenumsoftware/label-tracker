@@ -49,7 +49,7 @@ pub async fn run(
     db_connection: &mut store::PgConnection,
     github_api_token: &str,
     temp_dir: &camino::Utf8Path,
-    branch_patterns: ,
+    branch_patterns: &Vec<wildmatch::WildMatch>,
 ) -> anyhow::Result<()> {
     let github_client = GitHub::new(github_api_token)?;
     let pulls = github_client.get_pulls(github_repo).await?;
@@ -58,7 +58,7 @@ pub async fn run(
     repo::write_commit_graph(temp_dir).await?;
     let repo = gix::open(temp_dir)?;
     let references = repo.references()?;
-    let branches = find_tracked_branches(&references)?;
+    let branches = find_tracked_branches(&references, branch_patterns)?;
     for (branch_name, head) in branches {
         update_landings(db_connection, &repo, branch_name, head).await?;
     }
@@ -101,6 +101,7 @@ async fn update_landings(
 // TODO filter these according to a configuration option
 fn find_tracked_branches<'a>(
     references: &'a gix::reference::iter::Platform<'_>,
+    matchers: &Vec<wildmatch::WildMatch>,
 ) -> anyhow::Result<Vec<(String, gix::Id<'a>)>> {
     references
         // because the repo is bare, they will be remote branches
