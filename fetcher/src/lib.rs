@@ -76,7 +76,14 @@ async fn update_landings(
 ) -> anyhow::Result<()> {
     let commit = commit_graph
         .commit_by_id(head)
-        .context("failed to find node in commit graph")?;
+        .context("commit not found")?;
+
+    dbg!(&commit);
+
+    commit.iter_parents().for_each(|commit| {
+        dbg!(&commit);
+    });
+
     todo!("{branch} {commit:?}")
 }
 
