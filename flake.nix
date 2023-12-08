@@ -51,5 +51,5 @@
       formatter = treefmtEval.config.build.wrapper;
     };
   in
-  flake-utils.lib.eachDefaultSystem forEachDefaultSystem
+    flake-utils.lib.eachDefaultSystem forEachDefaultSystem;
 }
