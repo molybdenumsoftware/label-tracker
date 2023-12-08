@@ -4,7 +4,7 @@ use gix::prelude::*;
 pub async fn fetch_or_clone(
     repo_path: &camino::Utf8Path,
     github_repo: &super::GitHubRepo,
-) -> anyhow::Result<gix::Repository> {
+) -> anyhow::Result<()> {
     if repo_path.exists() {
         // gix::open(...)
         // fetch
@@ -22,7 +22,7 @@ pub async fn fetch_or_clone(
         let fetch_task = fetcher.fetch_only(gix::progress::Discard, &should_interrupt);
         //<<< drop(fetcher);
         let fetch_result = fetch_task.await;
-        let (repo, _outcome) = fetch_result?;
-        Ok(repo)
+        fetch_result?;
+        Ok(())
     }
 }
