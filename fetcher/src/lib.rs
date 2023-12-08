@@ -58,12 +58,10 @@ pub async fn run(
     repo::fetch_or_clone(repo_path, github_repo).await?;
     repo::write_commit_graph(repo_path).await?;
     let repo = gix::open(repo_path)?;
-    dbg!(&repo);
     let commit_graph = repo.commit_graph()?;
     let references = repo.references()?;
     let branches = find_tracked_branches(&references)?;
-    for (branch_name, head) in dbg!(branches) {
-        let head = head.to_string();
+    for (branch_name, head) in branches {
         update_landings(db_connection, &commit_graph, branch_name, head).await?;
     }
 
@@ -74,10 +72,11 @@ async fn update_landings(
     db_connection: &mut store::PgConnection,
     commit_graph: &gix::commitgraph::Graph,
     branch: String,
-    head: String,
+    head: gix::Id<'_>,
 ) -> anyhow::Result<()> {
-    let head = gix::ObjectId::from_str(&head)?;
-    let commit = commit_graph.commit_by_id(head).context("")?;
+    let commit = commit_graph
+        .commit_by_id(head)
+        .context("failed to find node in commit graph")?;
     todo!("{branch} {commit:?}")
 }
 
