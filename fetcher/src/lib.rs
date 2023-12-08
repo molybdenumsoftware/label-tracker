@@ -1,10 +1,6 @@
 #![warn(clippy::pedantic)]
 
-use std::str::FromStr;
-
 use crate::github::GitHub;
-use anyhow::Context;
-use gix::oid;
 use itertools::Itertools;
 
 mod github;
@@ -41,6 +37,8 @@ impl std::str::FromStr for GitHubRepo {
     }
 }
 
+// master, nixpkgs-unstable, nixpkgs-stable, release-23.11, nixos-23.11
+
 /// Run the darn thing.
 ///
 /// # Errors
@@ -50,14 +48,15 @@ pub async fn run(
     github_repo: &GitHubRepo,
     db_connection: &mut store::PgConnection,
     github_api_token: &str,
-    repo_path: &camino::Utf8Path,
+    temp_dir: &camino::Utf8Path,
+    branch_patterns: ,
 ) -> anyhow::Result<()> {
     let github_client = GitHub::new(github_api_token)?;
     let pulls = github_client.get_pulls(github_repo).await?;
     store::Pr::bulk_insert(db_connection, pulls).await?;
-    repo::fetch_or_clone(repo_path, github_repo).await?;
-    repo::write_commit_graph(repo_path).await?;
-    let repo = gix::open(repo_path)?;
+    repo::fetch_or_clone(temp_dir, github_repo).await?;
+    repo::write_commit_graph(temp_dir).await?;
+    let repo = gix::open(temp_dir)?;
     let references = repo.references()?;
     let branches = find_tracked_branches(&references)?;
     for (branch_name, head) in branches {
@@ -103,7 +102,6 @@ async fn update_landings(
 fn find_tracked_branches<'a>(
     references: &'a gix::reference::iter::Platform<'_>,
 ) -> anyhow::Result<Vec<(String, gix::Id<'a>)>> {
-    compile_error!("DO the corect filter");
     references
         // because the repo is bare, they will be remote branches
         .local_branches()?
