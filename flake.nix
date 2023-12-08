@@ -1,6 +1,7 @@
 {
   inputs = {
     nixpkgs.url = github:NixOS/nixpkgs/nixos-unstable-small;
+    flake-utils.url = "github:numtide/flake-utils";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -16,19 +17,8 @@
       getExe
       pipe
       ;
-
-    systems = {"x86_64-linux" = {}; "aarch64-darwin" = {};};
-    combine = fn:
-      with builtins; let
-        parts = mapAttrs (s: _: fn (nixpkgs.legacyPackages.${s})) systems;
-        keys = foldl' (a: b: a // b) {} (attrValues parts);
-      in
-        mapAttrs (k: _: mapAttrs (s: _: parts.${s}.${k} or {}) systems) keys;
   in
-    combine (pkgs: let
-      treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
-      util = bin: pkgs.writeShellScriptBin "util-${bin}" "cargo run --package util --bin ${bin}";
-    in rec {
+    forEachDefaultSystem = system: rec {
       packages = rec {
         label-tracker = pkgs.callPackage ./label-tracker.nix {};
         fetcher = pkgs.callPackage ./fetcher.nix {};
@@ -58,7 +48,11 @@
         };
 
       formatter = treefmtEval.config.build.wrapper;
-    })
+    };
+    combine (pkgs: let
+      treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+      util = bin: pkgs.writeShellScriptBin "util-${bin}" "cargo run --package util --bin ${bin}";
+    in )
     // {
       nixosModule = import ./module.nix {inherit self;};
     };
