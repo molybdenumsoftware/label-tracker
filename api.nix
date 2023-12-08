@@ -9,5 +9,5 @@ rustPlatform.buildRustPackage {
   src = ./.;
   buildAndTestSubdir = "api";
   checkInputs = [postgresql];
-  buildInputs = with pkgs; [iconv.dev];
+  buildInputs = with pkgs; [iconv];
 }
