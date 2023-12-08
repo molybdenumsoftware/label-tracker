@@ -10,20 +10,22 @@ pub async fn fetch_or_clone(
         // fetch
         todo!()
     } else {
-        // let mut fetcher = gix::clone::PrepareFetch::new(
-        //     format!(
-        //         "https://github.com/{}/{}",
-        //         github_repo.owner, github_repo.name
-        //     ),
-        //     repo_path,
-        //     gix::create::Kind::Bare,
-        //     gix::create::Options::default(),
-        //     gix::open::Options::default(),
-        // )?;
-        // Ok(fetcher
-        //     .fetch_only(gix::progress::Discard, &AtomicBool::new(false))
-        //     .await?
-        //     .0)
-        todo!()
+        let mut fetcher = gix::clone::PrepareFetch::new(
+            format!(
+                "https://github.com/{}/{}",
+                github_repo.owner, github_repo.name
+            ),
+            repo_path,
+            gix::create::Kind::Bare,
+            gix::create::Options::default(),
+            gix::open::Options::default(),
+        )?;
+
+        let repo = fetcher
+            .fetch_only(gix::progress::Discard, &AtomicBool::new(false))
+            .await?
+            .0;
+
+        Ok(repo)
     }
 }
