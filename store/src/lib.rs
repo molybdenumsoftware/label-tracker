@@ -74,7 +74,7 @@ impl Pr {
         Ok(())
     }
 
-    /// Retrieves all [`Landings`]s.
+    /// Retrieves all [`Pr`]s.
     ///
     /// # Errors
     ///
@@ -91,6 +91,31 @@ impl Pr {
             })
             .fetch_all(connection)
             .await
+    }
+
+    /// Retrieves [`Pr`] for commit.
+    ///
+    /// # Errors
+    ///
+    /// See error type for details.
+    ///
+    /// # Panics
+    ///
+    /// See [`sqlx::query!`].
+    pub async fn for_commit(
+        connection: &mut sqlx::PgConnection,
+        commit: impl Into<GitCommit>,
+    ) -> Result<Option<Self>, sqlx::Error> {
+        sqlx::query!(
+            "SELECT * from github_prs where commit = $1",
+            commit.into().0
+        )
+        .map(|pr| Self {
+            number: pr.number.into(),
+            commit: pr.commit.map(Into::into),
+        })
+        .fetch_optional(connection)
+        .await
     }
 }
 

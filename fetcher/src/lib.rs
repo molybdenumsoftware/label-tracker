@@ -82,24 +82,34 @@ async fn update_landings(
     for commit in repo.rev_walk([head]).all()? {
         let commit = commit?;
 
-        if let Some(pr) = store::git
+        if let Some(pr) = store::Pr::for_commit(db_connection, commit.id.to_string()).await? {
+            store::Landing {
+                github_pr: pr.number,
+                branch_id: branch.id(),
+            }
+            .insert(db_connection)
+            .await?;
+        }
     }
 
     //<<< commit.iter_parents().for_each(|commit| {
     //<<<     dbg!(&commit);
     //<<< });
-
-    todo!("{branch}")
+    // todo!("{branch}")
+    Ok(())
 }
 
 // TODO filter these according to a configuration option
 fn find_tracked_branches<'a>(
     references: &'a gix::reference::iter::Platform<'_>,
 ) -> anyhow::Result<Vec<(String, gix::Id<'a>)>> {
+    compile_error!("DO the corect filter");
     references
         // because the repo is bare, they will be remote branches
         .local_branches()?
         .map(|r| r.map_err(|e| anyhow::anyhow!(e)))
         .map_ok(|branch| (branch.name().shorten().to_string(), branch.id()))
+        // TODO THIWASLKDJHA is not the right filter
+        .filter_ok(|branch| matches!(branch.0.as_str(), "master" | "channel1"))
         .collect()
 }

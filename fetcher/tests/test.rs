@@ -22,7 +22,7 @@ async fn assert_landings(connection: &mut store::PgConnection) {
         })
         .collect::<Vec<_>>();
 
-    assert_eq!(actual, [(1, "master"), (1, "branch1"), (2, "master"),]);
+    assert_eq!(actual, [(1, "channel1"), (1, "master"), (2, "master"),]);
 
     let mut prs = store::Pr::all(connection).await.unwrap();
     prs.sort();
