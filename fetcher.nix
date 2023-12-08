@@ -7,4 +7,5 @@ rustPlatform.buildRustPackage {
   cargoLock.lockFile = ./Cargo.lock;
   src = ./.;
   buildAndTestSubdir = "fetcher";
+  nativeBuildInputs = with pkgs; [iconv.dev];
 }
