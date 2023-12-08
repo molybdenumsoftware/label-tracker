@@ -980,6 +980,7 @@ dependencies = [
  "reqwest",
  "serde",
  "store",
+ "tempfile",
  "tokio",
  "util",
 ]

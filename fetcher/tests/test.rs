@@ -62,9 +62,14 @@ async fn first_run() {
         async move {
             let mut connection = context.connection().await.unwrap();
 
-            fetcher::run(&github_repo(), &mut connection, &github_token())
+            let repo_tempdir = tempfile::tempdir().unwrap();
+            let repo_path: &camino::Utf8Path = repo_tempdir.path().try_into().unwrap();
+
+            fetcher::run(&github_repo(), &mut connection, &github_token(), repo_path)
                 .await
                 .unwrap();
+
+            drop(repo_tempdir);
 
             assert_landings(&mut connection).await;
         }
@@ -86,7 +91,10 @@ async fn subsequent_run() {
             .await
             .unwrap();
 
-            fetcher::run(&github_repo(), &mut connection, &github_token())
+            let repo_tempdir = tempfile::tempdir().unwrap();
+            let repo_path: &camino::Utf8Path = repo_tempdir.path().try_into().unwrap();
+
+            fetcher::run(&github_repo(), &mut connection, &github_token(), repo_path)
                 .await
                 .unwrap();
 
