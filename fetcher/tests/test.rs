@@ -63,9 +63,10 @@ async fn first_run() {
             let mut connection = context.connection().await.unwrap();
 
             let repo_tempdir = tempfile::tempdir().unwrap();
-            let repo_path: &camino::Utf8Path = repo_tempdir.path().try_into().unwrap();
+            let tempdir_path: &camino::Utf8Path = repo_tempdir.path().try_into().unwrap();
+            let repo_path = tempdir_path.join(&"repo");
 
-            fetcher::run(&github_repo(), &mut connection, &github_token(), repo_path)
+            fetcher::run(&github_repo(), &mut connection, &github_token(), &repo_path)
                 .await
                 .unwrap();
 

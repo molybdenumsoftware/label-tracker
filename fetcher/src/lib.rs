@@ -73,7 +73,7 @@ async fn update_landings(
     db_connection: &mut store::PgConnection,
     commit_graph: &gix::commitgraph::Graph,
     branch: String,
-    head: String
+    head: String,
 ) -> anyhow::Result<()> {
     let head = gix::ObjectId::from_str(&head)?;
     let commit = commit_graph.commit_by_id(head).context("")?;
@@ -84,7 +84,6 @@ async fn update_landings(
 fn find_tracked_branches<'a>(
     references: &'a gix::reference::iter::Platform<'_>,
 ) -> anyhow::Result<Vec<(String, gix::Id<'a>)>> {
-
     references
         .remote_branches()?
         .map(|r| r.map_err(|e| anyhow::anyhow!(e)))
