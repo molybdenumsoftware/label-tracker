@@ -62,7 +62,19 @@ pub async fn run(
     Ok(())
 }
 
+async fn update_landings(
+    db_connection: &mut store::PgConnection,
+    repo: &gix::Repository,
+    commit_graph: &gix::commitgraph::Graph,
+    branch: &str,
+) -> anyhow::Result<()> {
+    let head: &str = repo.
+    commit_graph.id_at
+    todo!()
+}
+
 // TODO filter these according to a configuration option
-fn find_tracked_branches(repo: &gix::Repository) -> std::collections::BTreeSet<&str> {
-    repo.branch_names()
+fn find_tracked_branches(repo: &gix::Repository) -> std::collections::BTreeSet<gix::Reference> {
+    todo!()
+    //<<< repo.branch_names()
 }
