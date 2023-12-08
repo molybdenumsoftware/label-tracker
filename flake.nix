@@ -17,7 +17,7 @@
       pipe
       ;
 
-    systems = {"x86_64-linux" = {};};
+    systems = {"x86_64-linux" = {}; "aarch64-darwin" = {};};
     combine = fn:
       with builtins; let
         parts = mapAttrs (s: _: fn (nixpkgs.legacyPackages.${s})) systems;
