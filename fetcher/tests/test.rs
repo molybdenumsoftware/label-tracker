@@ -7,7 +7,7 @@
 
 use futures::FutureExt;
 
-async fn assert_landings(connection: &mut store::PgConnection) {
+async fn assert(connection: &mut store::PgConnection, landings: &[(u32, &str)], prs: &[store::Pr]) {
     let mut landings = store::Landing::all(connection).await.unwrap();
     landings.sort();
     let all_branches = store::Branch::all(connection).await.unwrap();
@@ -78,7 +78,7 @@ async fn first_run() {
 
             drop(repo_tempdir);
 
-            assert_landings(&mut connection).await;
+            assert(&mut connection).await;
         }
         .boxed_local()
     })
@@ -112,7 +112,7 @@ async fn subsequent_run() {
             .await
             .unwrap();
 
-            assert_landings(&mut connection).await;
+            assert(&mut connection).await;
         }
         .boxed_local()
     })
@@ -125,6 +125,7 @@ async fn branch_patterns() {
         async move {
             let mut connection = context.connection().await.unwrap();
 
+            // TODO: DRY repo_tempdir
             let repo_tempdir = tempfile::tempdir().unwrap();
             let repo_path: camino::Utf8PathBuf =
                 repo_tempdir.path().join("repo").try_into().unwrap();
@@ -134,12 +135,12 @@ async fn branch_patterns() {
                 &mut connection,
                 &github_token(),
                 &repo_path,
-                &vec![wildmatch::WildMatch::new("*")],
+                &vec![wildmatch::WildMatch::new("master")],
             )
             .await
             .unwrap();
 
-            assert_landings(&mut connection).await;
+            assert(&mut connection).await;
         }
         .boxed_local()
     })
