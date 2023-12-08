@@ -58,10 +58,11 @@ pub async fn run(
     repo::fetch_or_clone(repo_path, github_repo).await?;
     repo::write_commit_graph(repo_path).await?;
     let repo = gix::open(repo_path)?;
+    dbg!(&repo);
     let commit_graph = repo.commit_graph()?;
     let references = repo.references()?;
     let branches = find_tracked_branches(&references)?;
-    for (branch_name, head) in branches {
+    for (branch_name, head) in dbg!(branches) {
         let head = head.to_string();
         update_landings(db_connection, &commit_graph, branch_name, head).await?;
     }

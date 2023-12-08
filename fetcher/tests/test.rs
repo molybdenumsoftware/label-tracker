@@ -64,7 +64,7 @@ async fn first_run() {
 
             let repo_tempdir = tempfile::tempdir().unwrap();
             let tempdir_path: &camino::Utf8Path = repo_tempdir.path().try_into().unwrap();
-            let repo_path = tempdir_path.join(&"repo");
+            let repo_path = tempdir_path.join("repo");
 
             fetcher::run(&github_repo(), &mut connection, &github_token(), &repo_path)
                 .await
@@ -93,9 +93,10 @@ async fn subsequent_run() {
             .unwrap();
 
             let repo_tempdir = tempfile::tempdir().unwrap();
-            let repo_path: &camino::Utf8Path = repo_tempdir.path().try_into().unwrap();
+            let repo_path: camino::Utf8PathBuf =
+                repo_tempdir.path().join("repo").try_into().unwrap();
 
-            fetcher::run(&github_repo(), &mut connection, &github_token(), repo_path)
+            fetcher::run(&github_repo(), &mut connection, &github_token(), &repo_path)
                 .await
                 .unwrap();
 
