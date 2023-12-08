@@ -18,11 +18,10 @@ pub async fn fetch_or_clone(
             gix::open::Options::default(),
         )?;
 
-        let fetch_only = fetcher
-            .fetch_only(gix::progress::Discard, &AtomicBool::new(false))
-            .await?;
-        let repo = fetch_only.0;
-
+        let should_interrupt = AtomicBool::new(false);
+        let fetch_task = fetcher.fetch_only(gix::progress::Discard, &should_interrupt);
+        let fetch_result = fetch_task.await;
+        let (repo, _outcome) = fetch_result?;
         Ok(repo)
     }
 }
