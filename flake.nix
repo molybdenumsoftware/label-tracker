@@ -10,6 +10,7 @@
     self,
     nixpkgs,
     treefmt-nix,
+    flake-utils,
   }: let
     inherit
       (nixpkgs.lib)
@@ -17,16 +18,14 @@
       getExe
       pipe
       ;
+
     forEachDefaultSystem = system: let
+      pkgs = nixpkgs.legacyPackages.${system};
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
       util = bin: pkgs.writeShellScriptBin "util-${bin}" "cargo run --package util --bin ${bin}";
-    in rec {
-      packages = rec {
-        label-tracker = pkgs.callPackage ./label-tracker.nix {};
-        fetcher = pkgs.callPackage ./fetcher.nix {};
-        api = pkgs.callPackage ./api.nix {};
-      };
-
+      packages.fetcher = pkgs.callPackage ./fetcher.nix {};
+      packages.api = pkgs.callPackage ./api.nix {};
+    in {
       devShells.default = pkgs.mkShell {
         inputsFrom = attrValues packages;
         packages = with pkgs; [rustfmt rust-analyzer clippy sqlx-cli];
@@ -52,5 +51,5 @@
       formatter = treefmtEval.config.build.wrapper;
     };
   in
-  inputs.flake-utils
+  flake-utils.lib.eachDefaultSystem forEachDefaultSystem
 }
