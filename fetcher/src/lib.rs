@@ -54,7 +54,7 @@ pub async fn run(
     repo::write_commit_graph(repo_path).await?;
     let repo = gix::open(repo_path)?;
     let commit_graph = repo.commit_graph()?;
-    let branches = find_tracked_branches(&repo);
+    let branches = find_tracked_branches(&repo)?;
     for branch in branches {
         update_landings(db_connection, &commit_graph, branch).await?;
     }
@@ -64,17 +64,18 @@ pub async fn run(
 
 async fn update_landings(
     db_connection: &mut store::PgConnection,
-    repo: &gix::Repository,
     commit_graph: &gix::commitgraph::Graph,
-    branch: &str,
+    branch: gix::Reference<'_>,
 ) -> anyhow::Result<()> {
-    let head: &str = repo.
-    commit_graph.id_at
+    // let head: &str = repo.;
+    // commit_graph.id_at;
     todo!()
 }
 
 // TODO filter these according to a configuration option
-fn find_tracked_branches(repo: &gix::Repository) -> std::collections::BTreeSet<gix::Reference> {
-    todo!()
-    //<<< repo.branch_names()
+fn find_tracked_branches(repo: &gix::Repository) -> anyhow::Result<Vec<gix::Reference>> {
+    repo.references()?
+        .remote_branches()?
+        .map(|r| r.map_err(|e| anyhow::anyhow!(e)))
+        .collect()
 }
