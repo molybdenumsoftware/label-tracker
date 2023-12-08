@@ -17,8 +17,10 @@
       getExe
       pipe
       ;
-  in
-    forEachDefaultSystem = system: rec {
+    forEachDefaultSystem = system: let
+      treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+      util = bin: pkgs.writeShellScriptBin "util-${bin}" "cargo run --package util --bin ${bin}";
+    in rec {
       packages = rec {
         label-tracker = pkgs.callPackage ./label-tracker.nix {};
         fetcher = pkgs.callPackage ./fetcher.nix {};
@@ -49,11 +51,6 @@
 
       formatter = treefmtEval.config.build.wrapper;
     };
-    combine (pkgs: let
-      treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
-      util = bin: pkgs.writeShellScriptBin "util-${bin}" "cargo run --package util --bin ${bin}";
-    in )
-    // {
-      nixosModule = import ./module.nix {inherit self;};
-    };
+  in
+  inputs.flake-utils
 }
