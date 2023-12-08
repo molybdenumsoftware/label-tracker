@@ -58,11 +58,10 @@ pub async fn run(
     repo::fetch_or_clone(repo_path, github_repo).await?;
     repo::write_commit_graph(repo_path).await?;
     let repo = gix::open(repo_path)?;
-    let commit_graph = repo.commit_graph()?;
     let references = repo.references()?;
     let branches = find_tracked_branches(&references)?;
     for (branch_name, head) in branches {
-        update_landings(db_connection, &commit_graph, branch_name, head).await?;
+        update_landings(db_connection, &repo, branch_name, head).await?;
     }
 
     Ok(())
@@ -70,21 +69,25 @@ pub async fn run(
 
 async fn update_landings(
     db_connection: &mut store::PgConnection,
-    commit_graph: &gix::commitgraph::Graph,
+
+    repo: &gix::Repository,
     branch: String,
     head: gix::Id<'_>,
 ) -> anyhow::Result<()> {
-    let commit = commit_graph
-        .commit_by_id(head)
-        .context("commit not found")?;
+    //<<< let commit = commit_graph
+    //<<<     .commit_by_id(head)
+    //<<<     .context("commit not found")?;
 
-    dbg!(&commit);
+    repo.rev_walk([head]).all()?.try_for_each(|info| {
+        dbg!(info.id);
+        dbg!(info);
+    })?;
 
-    commit.iter_parents().for_each(|commit| {
-        dbg!(&commit);
-    });
+    //<<< commit.iter_parents().for_each(|commit| {
+    //<<<     dbg!(&commit);
+    //<<< });
 
-    todo!("{branch} {commit:?}")
+    todo!("{branch}")
 }
 
 // TODO filter these according to a configuration option
