@@ -77,11 +77,13 @@ async fn update_landings(
     //<<< let commit = commit_graph
     //<<<     .commit_by_id(head)
     //<<<     .context("commit not found")?;
+    let branch = store::Branch::get_or_insert(db_connection, branch).await?;
 
-    repo.rev_walk([head]).all()?.try_for_each(|info| {
-        dbg!(info.id);
-        dbg!(info);
-    })?;
+    for commit in repo.rev_walk([head]).all()? {
+        let commit = commit?;
+
+        if let Some(pr) = store::git
+    }
 
     //<<< commit.iter_parents().for_each(|commit| {
     //<<<     dbg!(&commit);
