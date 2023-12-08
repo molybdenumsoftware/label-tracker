@@ -11,10 +11,7 @@ pub async fn fetch_or_clone(
         todo!()
     } else {
         let mut fetcher = gix::clone::PrepareFetch::new(
-            format!(
-                "https://github.com/{}/{}",
-                github_repo.owner, github_repo.name
-            ),
+            github_repo.url(),
             repo_path,
             gix::create::Kind::Bare,
             gix::create::Options::default(),

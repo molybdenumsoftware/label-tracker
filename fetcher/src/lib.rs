@@ -13,6 +13,11 @@ pub struct GitHubRepo {
     owner: String,
     name: String,
 }
+impl GitHubRepo {
+    fn url(&self) -> String {
+        format!("https://github.com/{}/{}", self.owner, self.name)
+    }
+}
 
 impl std::str::FromStr for GitHubRepo {
     type Err = String;
