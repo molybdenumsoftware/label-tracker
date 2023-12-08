@@ -1,6 +1,8 @@
 #![warn(clippy::pedantic)]
 
 use crate::github::GitHub;
+use anyhow::Context;
+use gix::oid;
 use itertools::Itertools;
 
 mod github;
@@ -55,9 +57,11 @@ pub async fn run(
     repo::write_commit_graph(repo_path).await?;
     let repo = gix::open(repo_path)?;
     let commit_graph = repo.commit_graph()?;
-    let branches = find_tracked_branches(&repo)?;
-    for branch in branches {
-        update_landings(db_connection, &commit_graph, branch).await?;
+    let references = repo.references()?;
+    let branches = find_tracked_branches(&references)?;
+    for (branch_name, head) in branches {
+        let head = head.to_string();
+        update_landings(db_connection, &commit_graph, branch_name, head).await?;
     }
 
     Ok(())
@@ -66,20 +70,20 @@ pub async fn run(
 async fn update_landings(
     db_connection: &mut store::PgConnection,
     commit_graph: &gix::commitgraph::Graph,
-    branch: gix::Reference<'_>,
+    branch: String,
+    head: String
 ) -> anyhow::Result<()> {
-    // let head: &str = repo.;
-    // commit_graph.id_at;
-    todo!()
+    let head = gix::Id::from_str(&head);
+    let commit = commit_graph.commit_by_id(head).context("")?;
+    todo!("{branch} {commit:?}")
 }
 
 // TODO filter these according to a configuration option
 fn find_tracked_branches<'a>(
-    repo: &'a gix::Repository,
-) -> anyhow::Result<std::collections::BTreeSet<(String, gix::Id)>> {
-    let platform = repo.references()?;
+    references: &'a gix::reference::iter::Platform<'_>,
+) -> anyhow::Result<Vec<(String, gix::Id<'a>)>> {
 
-    platform
+    references
         .remote_branches()?
         .map(|r| r.map_err(|e| anyhow::anyhow!(e)))
         .map_ok(|branch| (branch.name().shorten().to_string(), branch.id()))
