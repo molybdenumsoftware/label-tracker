@@ -54,10 +54,15 @@ pub async fn run(
     repo::write_commit_graph(repo_path).await?;
     let repo = gix::open(repo_path)?;
     let commit_graph = repo.commit_graph()?;
-    let branches = find_tracked_branches(repo);
-    for branch in repo.branch_names() {
-        
+    let branches = find_tracked_branches(&repo);
+    for branch in branches {
+        update_landings(db_connection, &commit_graph, branch).await?;
     }
 
     Ok(())
+}
+
+// TODO filter these according to a configuration option
+fn find_tracked_branches(repo: &gix::Repository) -> std::collections::BTreeSet<&str> {
+    repo.branch_names()
 }
