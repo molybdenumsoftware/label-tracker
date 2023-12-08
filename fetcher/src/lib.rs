@@ -54,6 +54,10 @@ pub async fn run(
     repo::write_commit_graph(repo_path).await?;
     let repo = gix::open(repo_path)?;
     let commit_graph = repo.commit_graph()?;
+    let branches = find_tracked_branches(repo);
+    for branch in repo.branch_names() {
+        
+    }
 
     Ok(())
 }
