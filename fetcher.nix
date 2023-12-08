@@ -2,6 +2,7 @@
   rustPlatform,
   system,
   lib,
+  pkgs
 }: let
   inherit
     (lib)
@@ -15,6 +16,6 @@ in
     buildAndTestSubdir = "fetcher";
     buildInputs =
       if hasSuffix "-darwin" system
-      then []
+      then [pkgs.darwin.apple_sdk.frameworks.SystemConfiguration]
       else [];
   }

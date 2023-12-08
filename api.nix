@@ -2,6 +2,7 @@
   rustPlatform,
   pkgs,
   postgresql,
+  darwinBuildInputs
 }:
 rustPlatform.buildRustPackage {
   name = "api";
@@ -9,4 +10,5 @@ rustPlatform.buildRustPackage {
   src = ./.;
   buildAndTestSubdir = "api";
   checkInputs = [postgresql];
+  buildInputs = darwinBuildInputs;
 }

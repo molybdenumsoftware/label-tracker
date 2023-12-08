@@ -17,13 +17,17 @@
       attrValues
       getExe
       pipe
+      hasSuffix
       ;
 
     forEachDefaultSystem = system: let
+      darwinBuildInputs = if hasSuffix "-darwin" system
+        then [pkgs.darwin.apple_sdk.frameworks.SystemConfiguration]
+        else [];
       pkgs = nixpkgs.legacyPackages.${system};
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
       util = bin: pkgs.writeShellScriptBin "util-${bin}" "cargo run --package util --bin ${bin}";
-      packages.fetcher = pkgs.callPackage ./fetcher.nix {};
+      packages.fetcher = pkgs.callPackage ./fetcher.nix {darwinBuildInputs};
       packages.api = pkgs.callPackage ./api.nix {};
     in {
       devShells.default = pkgs.mkShell {
