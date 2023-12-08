@@ -1,6 +1,7 @@
 #![warn(clippy::pedantic)]
 
 use crate::github::GitHub;
+use itertools::Itertools;
 
 mod github;
 mod repo;
@@ -73,12 +74,14 @@ async fn update_landings(
 }
 
 // TODO filter these according to a configuration option
-fn find_tracked_branches<'a>(repo: &'a gix::Repository) -> anyhow::Result<std::collections::BTreeSet<(String, String)>> {
+fn find_tracked_branches<'a>(
+    repo: &'a gix::Repository,
+) -> anyhow::Result<std::collections::BTreeSet<(String, gix::Id)>> {
     let platform = repo.references()?;
 
     platform
         .remote_branches()?
-        .map_err(|e| anyhow::anyhow!(e))
-        .map_ok(|branch| {})
+        .map(|r| r.map_err(|e| anyhow::anyhow!(e)))
+        .map_ok(|branch| (branch.name().shorten().to_string(), branch.id()))
         .collect()
 }
