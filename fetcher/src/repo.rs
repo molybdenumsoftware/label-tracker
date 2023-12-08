@@ -6,6 +6,7 @@ pub async fn fetch_or_clone(
     github_repo: &super::GitHubRepo,
 ) -> anyhow::Result<()> {
     if repo_path.exists() {
+        tokio::process::Command::new("git").arg("-C").arg(repo_path).arg("fetch").status()
         Ok(())
     } else {
         // let mut fetcher = gix::clone::PrepareFetch::new(
