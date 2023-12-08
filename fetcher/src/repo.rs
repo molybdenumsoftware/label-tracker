@@ -20,6 +20,7 @@ pub async fn fetch_or_clone(
 
         let should_interrupt = AtomicBool::new(false);
         let fetch_task = fetcher.fetch_only(gix::progress::Discard, &should_interrupt);
+        //<<< drop(fetcher);
         let fetch_result = fetch_task.await;
         let (repo, _outcome) = fetch_result?;
         Ok(repo)
