@@ -86,7 +86,8 @@ fn find_tracked_branches<'a>(
     references: &'a gix::reference::iter::Platform<'_>,
 ) -> anyhow::Result<Vec<(String, gix::Id<'a>)>> {
     references
-        .remote_branches()?
+        // because the repo is bare, they will be remote branches
+        .local_branches()?
         .map(|r| r.map_err(|e| anyhow::anyhow!(e)))
         .map_ok(|branch| (branch.name().shorten().to_string(), branch.id()))
         .collect()
