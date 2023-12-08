@@ -51,7 +51,9 @@ pub async fn run(
     let pulls = github_client.get_pulls(github_repo).await?;
     store::Pr::bulk_insert(db_connection, pulls).await?;
     repo::fetch_or_clone(repo_path, github_repo).await?;
-    repo::build_commit_graph(repo_path).await?;
+    repo::write_commit_graph(repo_path).await?;
+    let repo = gix::open(repo_path)?;
+    let commit_graph = repo.commit_graph()?;
 
     Ok(())
 }
