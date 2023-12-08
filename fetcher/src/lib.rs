@@ -73,9 +73,12 @@ async fn update_landings(
 }
 
 // TODO filter these according to a configuration option
-fn find_tracked_branches(repo: &gix::Repository) -> anyhow::Result<Vec<gix::Reference>> {
-    repo.references()?
+fn find_tracked_branches<'a>(repo: &'a gix::Repository) -> anyhow::Result<std::collections::BTreeSet<(String, String)>> {
+    let platform = repo.references()?;
+
+    platform
         .remote_branches()?
-        .map(|r| r.map_err(|e| anyhow::anyhow!(e)))
+        .map_err(|e| anyhow::anyhow!(e))
+        .map_ok(|branch| {})
         .collect()
 }
