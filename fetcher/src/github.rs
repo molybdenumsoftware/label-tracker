@@ -1,4 +1,3 @@
-use anyhow::{bail, Result};
 use graphql_client::GraphQLQuery;
 
 use crate::GitHubRepo;
@@ -17,7 +16,7 @@ trait ChunkedQuery: GraphQLQuery {
     fn change_after(&self, v: Self::Variables, after: Option<String>) -> Self::Variables;
     fn set_batch(&self, batch: i64, v: Self::Variables) -> Self::Variables;
 
-    fn process(&self, d: Self::ResponseData) -> Result<(Vec<Self::Item>, Option<Cursor>)>;
+    fn process(&self, d: Self::ResponseData) -> anyhow::Result<(Vec<Self::Item>, Option<Cursor>)>;
 }
 
 type DateTime = chrono::DateTime<chrono::Utc>;
@@ -48,11 +47,11 @@ impl ChunkedQuery for PullsQuery {
         Self::Variables { batch, ..v }
     }
 
-    fn process(&self, d: Self::ResponseData) -> Result<(Vec<Self::Item>, Option<Cursor>)> {
+    fn process(&self, d: Self::ResponseData) -> anyhow::Result<(Vec<Self::Item>, Option<Cursor>)> {
         log::debug!("rate limits: {:?}", d.rate_limit);
         let prs = match d.repository {
             Some(r) => r.pull_requests,
-            None => bail!("query returned no repo"),
+            None => anyhow::bail!("query returned no repo"),
         };
         // deliberately ignore all nulls. no idea why the schema doesn't make
         // all of these links mandatory, having them nullable makes no sense.
@@ -86,12 +85,12 @@ impl ChunkedQuery for PullsQuery {
 }
 
 impl GitHub {
-    pub fn new(api_token: &str) -> Result<Self> {
+    pub fn new(api_token: &str) -> anyhow::Result<Self> {
         use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 
         let headers = match HeaderValue::from_str(&format!("Bearer {api_token}")) {
             Ok(h) => [(AUTHORIZATION, h)].into_iter().collect::<HeaderMap>(),
-            Err(e) => bail!("invalid API token: {}", e),
+            Err(e) => anyhow::bail!("invalid API token: {}", e),
         };
 
         let client = reqwest::Client::builder()
@@ -109,7 +108,7 @@ impl GitHub {
         &self,
         q: &Q,
         mut vars: <Q as GraphQLQuery>::Variables,
-    ) -> Result<Vec<Q::Item>>
+    ) -> anyhow::Result<Vec<Q::Item>>
     where
         Q: ChunkedQuery + std::fmt::Debug,
         Q::Variables: Clone + std::fmt::Debug,
@@ -147,7 +146,7 @@ impl GitHub {
                     log::info!("new batch size: {}", batch);
                     continue;
                 }
-                Some(e) => bail!("query failed: {:?}", e),
+                Some(e) => anyhow::bail!("query failed: {:?}", e),
             };
 
             match resp.data {
@@ -159,14 +158,14 @@ impl GitHub {
                         cursor => vars = q.change_after(vars, cursor),
                     }
                 }
-                None => bail!("query returned no data"),
+                None => anyhow::bail!("query returned no data"),
             }
         }
 
         Ok(result)
     }
 
-    pub async fn get_pulls(&self, repo: &GitHubRepo) -> Result<Vec<store::Pr>> {
+    pub async fn get_pulls(&self, repo: &GitHubRepo) -> anyhow::Result<Vec<store::Pr>> {
         // Currently querying for all PRs ever. In the future, we'll likely want to paginate/be
         // able to pick up where we left off.
         self.query_raw(

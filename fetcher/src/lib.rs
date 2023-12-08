@@ -1,5 +1,7 @@
 #![warn(clippy::pedantic)]
 
+use std::str::FromStr;
+
 use crate::github::GitHub;
 use anyhow::Context;
 use gix::oid;
@@ -73,7 +75,7 @@ async fn update_landings(
     branch: String,
     head: String
 ) -> anyhow::Result<()> {
-    let head = gix::Id::from_str(&head);
+    let head = gix::ObjectId::from_str(&head)?;
     let commit = commit_graph.commit_by_id(head).context("")?;
     todo!("{branch} {commit:?}")
 }

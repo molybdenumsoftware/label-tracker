@@ -73,7 +73,7 @@ async fn first_run() {
 
             assert_landings(&mut connection).await;
         }
-        .boxed()
+        .boxed_local()
     })
     .await;
 }
@@ -100,7 +100,7 @@ async fn subsequent_run() {
 
             assert_landings(&mut connection).await;
         }
-        .boxed()
+        .boxed_local()
     })
     .await;
 }
