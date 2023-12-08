@@ -102,9 +102,42 @@ async fn subsequent_run() {
             let repo_path: camino::Utf8PathBuf =
                 repo_tempdir.path().join("repo").try_into().unwrap();
 
-            fetcher::run(&github_repo(), &mut connection, &github_token(), &repo_path)
-                .await
-                .unwrap();
+            fetcher::run(
+                &github_repo(),
+                &mut connection,
+                &github_token(),
+                &repo_path,
+                &vec![wildmatch::WildMatch::new("*")],
+            )
+            .await
+            .unwrap();
+
+            assert_landings(&mut connection).await;
+        }
+        .boxed_local()
+    })
+    .await;
+}
+
+#[tokio::test]
+async fn branch_patterns() {
+    util::DatabaseContext::with(|context| {
+        async move {
+            let mut connection = context.connection().await.unwrap();
+
+            let repo_tempdir = tempfile::tempdir().unwrap();
+            let repo_path: camino::Utf8PathBuf =
+                repo_tempdir.path().join("repo").try_into().unwrap();
+
+            fetcher::run(
+                &github_repo(),
+                &mut connection,
+                &github_token(),
+                &repo_path,
+                &vec![wildmatch::WildMatch::new("*")],
+            )
+            .await
+            .unwrap();
 
             assert_landings(&mut connection).await;
         }

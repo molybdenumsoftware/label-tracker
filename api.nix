@@ -1,8 +1,7 @@
 {
   rustPlatform,
-  pkgs,
   postgresql,
-  darwinBuildInputs
+  darwinBuildInputs,
 }:
 rustPlatform.buildRustPackage {
   name = "api";

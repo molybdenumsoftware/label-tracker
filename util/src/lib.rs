@@ -43,12 +43,12 @@ impl DatabaseContext {
         let data_dir = tmp_dir.path().join("data");
         std::fs::create_dir(&sockets_dir).unwrap();
 
-        assert!(Command::new("initdb")
+        let status = Command::new("initdb")
             .arg(&data_dir)
             .status()
-            // .await
-            .unwrap()
-            .success());
+            .unwrap();
+
+        assert!(status.success());
 
         let postgres = Command::new("postgres")
             .arg("-D")
