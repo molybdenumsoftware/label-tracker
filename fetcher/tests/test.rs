@@ -7,7 +7,7 @@
 
 use futures::FutureExt;
 
-async fn assert(connection: &mut store::PgConnection, landings: &[(u32, &str)], prs: &[store::Pr]) {
+async fn assert(connection: &mut store::PgConnection, expected_landings: &[(i32, &str)]) {
     let mut landings = store::Landing::all(connection).await.unwrap();
     landings.sort();
     let all_branches = store::Branch::all(connection).await.unwrap();
@@ -22,7 +22,7 @@ async fn assert(connection: &mut store::PgConnection, landings: &[(u32, &str)], 
         })
         .collect::<Vec<_>>();
 
-    assert_eq!(actual, [(1, "channel1"), (1, "master"), (2, "master"),]);
+    assert_eq!(actual, expected_landings);
 
     let mut prs = store::Pr::all(connection).await.unwrap();
     prs.sort();
@@ -32,15 +32,15 @@ async fn assert(connection: &mut store::PgConnection, landings: &[(u32, &str)], 
         [
             store::Pr {
                 number: 1.into(),
-                commit: Some("73da20569ac857daf6ed4eed70f2f691626b6df3".into())
+                commit: Some("73da20569ac857daf6ed4eed70f2f691626b6df3".into()),
             },
             store::Pr {
                 number: 2.into(),
-                commit: Some("ab909e9f7125283acdd8f6e490ad5b9750f89c81".into())
+                commit: Some("ab909e9f7125283acdd8f6e490ad5b9750f89c81".into()),
             },
             store::Pr {
                 number: 3.into(),
-                commit: None
+                commit: None,
             },
         ]
     );
@@ -78,7 +78,11 @@ async fn first_run() {
 
             drop(repo_tempdir);
 
-            assert(&mut connection).await;
+            assert(
+                &mut connection,
+                &[(1, "channel1"), (1, "master"), (2, "master")],
+            )
+            .await;
         }
         .boxed_local()
     })
@@ -112,7 +116,11 @@ async fn subsequent_run() {
             .await
             .unwrap();
 
-            assert(&mut connection).await;
+            assert(
+                &mut connection,
+                &[(1, "channel1"), (1, "master"), (2, "master")],
+            )
+            .await;
         }
         .boxed_local()
     })
@@ -140,7 +148,7 @@ async fn branch_patterns() {
             .await
             .unwrap();
 
-            assert(&mut connection).await;
+            assert(&mut connection, &[(1, "master"), (2, "master")]).await;
         }
         .boxed_local()
     })
