@@ -132,21 +132,32 @@ async fn subsequent_run() {
 
 struct TestContext<'a> {
     db_context: &'a util::DatabaseContext,
+    tempdir: tempfile::TempDir,
 }
 
 impl TestContext<'_> {
-    pub async fn with(
-        test: impl for<'a> FnOnce(&'a TestContext<'a>) -> futures::future::LocalBoxFuture<'a, ()>
-            + 'static,
+    async fn with(
+        test: impl for<'a> FnOnce(&'a TestContext<'a>) -> futures::future::LocalBoxFuture<()> + 'static,
     ) {
         util::DatabaseContext::with(|db_context| {
             async move {
-                let test_context = TestContext { db_context };
+                let tempdir = tempfile::tempdir().unwrap();
+
+                let test_context = TestContext {
+                    db_context,
+                    tempdir,
+                };
+
                 test(&test_context).await;
+                drop(test_context);
             }
             .boxed_local()
         })
         .await;
+    }
+
+    fn repo_dir(&self) -> camino::Utf8PathBuf {
+        self.tempdir.path().join("repo").try_into().unwrap()
     }
 }
 
@@ -158,7 +169,7 @@ async fn branch_patterns() {
 
             // TODO: DRY repo_tempdir
             let repo_tempdir = tempfile::tempdir().unwrap();
-            let repo_path: camino::Utf8PathBuf =
+            let repo_path: camino::utf8pathbuf =
                 repo_tempdir.path().join("repo").try_into().unwrap();
 
             fetcher::run(
