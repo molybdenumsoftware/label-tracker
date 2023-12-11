@@ -52,8 +52,16 @@ pub async fn run(
     branch_patterns: &[wildmatch::WildMatch],
 ) -> anyhow::Result<()> {
     let github_client = GitHub::new(github_api_token)?;
+
+    // <<< TODO: combine these into a single method that: >>>
+    // 1. finds where we left off in `github_pr_query_cursor`
+    // 2. fetchs a batch of PRs
+    //    - updates/inserts the PRs into the `github_prs` table
+    //    - updates the cursor in the `github_pr_query_cursor` table
+    // 3. back to step 1, until there are no subsequent pages
     let pulls = github_client.get_pulls(github_repo).await?;
     store::Pr::bulk_insert(db_connection, pulls).await?;
+
     repo::fetch_or_clone(temp_dir, github_repo).await?;
     repo::write_commit_graph(temp_dir).await?;
     let repo = gix::open(temp_dir)?;
