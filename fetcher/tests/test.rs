@@ -135,16 +135,16 @@ struct TestContext<'a> {
 }
 
 impl<'a> TestContext<'a> {
-    pub async fn with(f: impl FnOnce(&Self) -> futures::future::LocalBoxFuture<()>) {
-        let f = |db_context| {
+    pub async fn with(test: impl FnOnce(&Self) -> futures::future::LocalBoxFuture<'_, ()>) {
+        let do_with_db = |db_context| {
             async move {
                 let test_context = Self { db_context };
-                f(&test_context).await;
+                test(&test_context).await;
             }
             .boxed_local()
         };
 
-        util::DatabaseContext::with(f);
+        util::DatabaseContext::with(do_with_db).await;
     }
 }
 
