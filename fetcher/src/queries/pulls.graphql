@@ -6,7 +6,7 @@ query PullsQuery($owner: String!, $name: String!, $after: String, $batch: Int!) 
     resetAt
   }
   repository(owner: $owner, name: $name) {
-    pullRequests(first: $batch, after: $after, orderBy: { direction: DESC, field: UPDATED_AT }) {
+    pullRequests(first: $batch, after: $after, orderBy: { direction: ASC, field: UPDATED_AT }) {
       pageInfo {
         endCursor
         hasNextPage
@@ -14,14 +14,7 @@ query PullsQuery($owner: String!, $name: String!, $after: String, $batch: Int!) 
       edges {
         node {
           number
-          id
-          bodyHTML
-          closed
-          merged
           baseRefName
-          title
-          updatedAt
-          url
           mergeCommit {
             oid
           }
