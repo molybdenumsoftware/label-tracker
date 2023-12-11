@@ -135,7 +135,7 @@ struct TestContext<'a> {
 }
 
 impl<'a> TestContext<'a> {
-    pub async fn with(test: impl FnOnce(&Self) -> futures::future::LocalBoxFuture<'_, ()>) {
+    pub async fn with(test: impl FnOnce(&Self) -> futures::future::LocalBoxFuture<'_, ()> + 'static) {
         let do_with_db = |db_context| {
             async move {
                 let test_context = Self { db_context };
