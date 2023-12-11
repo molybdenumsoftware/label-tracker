@@ -130,37 +130,27 @@ async fn subsequent_run() {
     .await;
 }
 
-const NAME: &'static str = "asdf";
-
-fn f(t: impl std::fmt::Debug) {
-    drop(t);
+struct TestContext<'a> {
+    db_context: &'a util::DatabaseContext,
 }
 
-//<<< struct TestContext<'a> {
-//<<<     db_context: &'a util::DatabaseContext,
-//<<< }
-//<<<
-//<<< impl<'a> TestContext<'a> {
-//<<<     pub async fn with(
-//<<<         test: impl FnOnce(&Self) -> futures::future::LocalBoxFuture<'_, ()> + 'static,
-//<<<     ) {
-//<<<         let do_with_db = |db_context| {
-//<<<             async move {
-//<<<                 let test_context = Self { db_context };
-//<<<                 test(&test_context).await;
-//<<<             }
-//<<<             .boxed_local()
-//<<<         };
-//<<<
-//<<<         util::DatabaseContext::with(do_with_db).await;
-//<<<     }
-//<<< }
+impl TestContext<'_> {
+    pub async fn with<F: for<'a> FnOnce(&'a TestContext<'a>) -> futures::future::LocalBoxFuture<'a, ()> + 'static>(test: F) {
+        util::DatabaseContext::with(|db_context| {
+            async move {
+                let test_context = TestContext { db_context };
+                test(&test_context).await;
+            }
+            .boxed_local()
+        }).await;
+    }
+}
 
 #[tokio::test]
 async fn branch_patterns() {
-    util::DatabaseContext::with(|context| {
+    TestContext::with(|context| {
         async move {
-            let mut connection = context.connection().await.unwrap();
+            let mut connection = context.db_context.connection().await.unwrap();
 
             // TODO: DRY repo_tempdir
             let repo_tempdir = tempfile::tempdir().unwrap();
