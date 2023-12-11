@@ -130,18 +130,20 @@ async fn subsequent_run() {
     .await;
 }
 
-struct TestContext {
-    db_context: util::DatabaseContext;
+struct TestContext<'a> {
+    db_context: &'a util::DatabaseContext,
 }
 
-impl TestContext {
-    pub async fn with<T>(f: impl FnOnce(&Self) -> futures::future::LocalBoxFuture<T>) -> T {
+impl<'a> TestContext<'a> {
+    pub async fn with<T>(f: impl FnOnce(&Self) -> futures::future::LocalBoxFuture<T>) {
         util::DatabaseContext::with(|db_context| {
-            let test_context = Self {
-                db_context = db_context;
-            };
-            f(test_context)
-        }
+            async move {
+                let test_context = Self { db_context };
+
+                f(&test_context).await;
+            }
+            .boxed_local()
+        });
     }
 }
 
