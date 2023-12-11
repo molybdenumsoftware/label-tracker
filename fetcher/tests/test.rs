@@ -7,6 +7,32 @@
 
 use futures::FutureExt;
 
+impl TestContext<'_> {
+    async fn with(
+        test: impl for<'a> FnOnce(&'a TestContext<'a>) -> futures::future::LocalBoxFuture<()> + 'static,
+    ) {
+        util::DatabaseContext::with(|db_context| {
+            async move {
+                let tempdir = tempfile::tempdir().unwrap();
+
+                let test_context = TestContext {
+                    db_context,
+                    tempdir,
+                };
+
+                test(&test_context).await;
+                drop(test_context);
+            }
+            .boxed_local()
+        })
+        .await;
+    }
+
+    fn repo_dir(&self) -> camino::Utf8PathBuf {
+        self.tempdir.path().join("repo").try_into().unwrap()
+    }
+}
+
 async fn assert(connection: &mut store::PgConnection, expected_landings: &[(i32, &str)]) {
     let mut landings = store::Landing::all(connection).await.unwrap();
     landings.sort();
@@ -58,25 +84,22 @@ fn github_token() -> String {
 
 #[tokio::test]
 async fn first_run() {
-    util::DatabaseContext::with(|context| {
+    TestContext::with(|context| {
         async move {
-            let mut connection = context.connection().await.unwrap();
-
-            let repo_tempdir = tempfile::tempdir().unwrap();
-            let tempdir_path: &camino::Utf8Path = repo_tempdir.path().try_into().unwrap();
-            let repo_path = tempdir_path.join("repo");
+            let mut connection = context.db_context.connection().await.unwrap();
 
             fetcher::run(
                 &github_repo(),
                 &mut connection,
                 &github_token(),
-                &repo_path,
-                &vec![wildmatch::WildMatch::new("*")],
+                &context.repo_dir(),
+                &[
+                    wildmatch::WildMatch::new("master"),
+                    wildmatch::WildMatch::new("channel*"),
+                ],
             )
             .await
             .unwrap();
-
-            drop(repo_tempdir);
 
             assert(
                 &mut connection,
@@ -91,9 +114,9 @@ async fn first_run() {
 
 #[tokio::test]
 async fn subsequent_run() {
-    util::DatabaseContext::with(|context| {
+    TestContext::with(|context| {
         async move {
-            let mut connection = context.connection().await.unwrap();
+            let mut connection = context.db_context.connection().await.unwrap();
             store::Pr {
                 number: 1.into(),
                 commit: Some("73da20569ac857daf6ed4eed70f2f691626b6df3".into()),
@@ -102,16 +125,12 @@ async fn subsequent_run() {
             .await
             .unwrap();
 
-            let repo_tempdir = tempfile::tempdir().unwrap();
-            let repo_path: camino::Utf8PathBuf =
-                repo_tempdir.path().join("repo").try_into().unwrap();
-
             fetcher::run(
                 &github_repo(),
                 &mut connection,
                 &github_token(),
-                &repo_path,
-                &vec![
+                &context.repo_dir(),
+                &[
                     wildmatch::WildMatch::new("master"),
                     wildmatch::WildMatch::new("channel*"),
                 ],
@@ -135,49 +154,18 @@ struct TestContext<'a> {
     tempdir: tempfile::TempDir,
 }
 
-impl TestContext<'_> {
-    async fn with(
-        test: impl for<'a> FnOnce(&'a TestContext<'a>) -> futures::future::LocalBoxFuture<()> + 'static,
-    ) {
-        util::DatabaseContext::with(|db_context| {
-            async move {
-                let tempdir = tempfile::tempdir().unwrap();
-
-                let test_context = TestContext {
-                    db_context,
-                    tempdir,
-                };
-
-                test(&test_context).await;
-                drop(test_context);
-            }
-            .boxed_local()
-        })
-        .await;
-    }
-
-    fn repo_dir(&self) -> camino::Utf8PathBuf {
-        self.tempdir.path().join("repo").try_into().unwrap()
-    }
-}
-
 #[tokio::test]
 async fn branch_patterns() {
     TestContext::with(|context| {
         async move {
             let mut connection = context.db_context.connection().await.unwrap();
 
-            // TODO: DRY repo_tempdir
-            let repo_tempdir = tempfile::tempdir().unwrap();
-            let repo_path: camino::utf8pathbuf =
-                repo_tempdir.path().join("repo").try_into().unwrap();
-
             fetcher::run(
                 &github_repo(),
                 &mut connection,
                 &github_token(),
-                &repo_path,
-                &vec![wildmatch::WildMatch::new("master")],
+                &context.repo_dir(),
+                &[wildmatch::WildMatch::new("master")],
             )
             .await
             .unwrap();

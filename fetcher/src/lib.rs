@@ -49,7 +49,7 @@ pub async fn run(
     db_connection: &mut store::PgConnection,
     github_api_token: &str,
     temp_dir: &camino::Utf8Path,
-    branch_patterns: &Vec<wildmatch::WildMatch>,
+    branch_patterns: &[wildmatch::WildMatch],
 ) -> anyhow::Result<()> {
     let github_client = GitHub::new(github_api_token)?;
     let pulls = github_client.get_pulls(github_repo).await?;
