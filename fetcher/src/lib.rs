@@ -101,10 +101,10 @@ async fn update_landings(
 // TODO filter these according to a configuration option
 fn find_tracked_branches<'a>(
     references: &'a gix::reference::iter::Platform<'_>,
-    matchers: &Vec<wildmatch::WildMatch>,
+    matchers: &[wildmatch::WildMatch],
 ) -> anyhow::Result<Vec<(String, gix::Id<'a>)>> {
     references
-        // because the repo is bare, they will be remote branches
+        // Calling local_branches in a bare repo results in remote branches
         .local_branches()?
         .map(|r| r.map_err(|e| anyhow::anyhow!(e)))
         .map_ok(|branch| (branch.name().shorten().to_string(), branch.id()))
