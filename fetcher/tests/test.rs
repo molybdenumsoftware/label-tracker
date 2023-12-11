@@ -111,7 +111,10 @@ async fn subsequent_run() {
                 &mut connection,
                 &github_token(),
                 &repo_path,
-                &vec![wildmatch::WildMatch::new("*")],
+                &vec![
+                    wildmatch::WildMatch::new("master"),
+                    wildmatch::WildMatch::new("channel*"),
+                ],
             )
             .await
             .unwrap();

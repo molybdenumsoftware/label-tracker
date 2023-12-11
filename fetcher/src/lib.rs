@@ -108,7 +108,6 @@ fn find_tracked_branches<'a>(
         .local_branches()?
         .map(|r| r.map_err(|e| anyhow::anyhow!(e)))
         .map_ok(|branch| (branch.name().shorten().to_string(), branch.id()))
-        // TODO THIWASLKDJHA is not the right filter
-        .filter_ok(|branch| matches!(branch.0.as_str(), "master" | "channel1"))
+        .filter_ok(|(branch_name, _id)| matchers.iter().any(|matcher| matcher.matches(branch_name)))
         .collect()
 }
