@@ -132,8 +132,8 @@ async fn subsequent_run() {
 
 const NAME: &'static str = "asdf";
 
-fn f<T: std::fmt::Debug + 'static>(t: T) {
-    std::thread::spawn(|| dbg!(t)).join().unwrap();
+fn f(t: impl std::fmt::Debug) {
+    drop(t);
 }
 
 //<<< struct TestContext<'a> {
