@@ -38,12 +38,12 @@ pub async fn fetch_or_clone(
 }
 
 pub async fn write_commit_graph(repo_path: &camino::Utf8Path) -> anyhow::Result<()> {
-    Ok(isolated_git([
+    isolated_git([
         "-C",
         repo_path.as_str(),
         "commit-graph",
         "write",
         "--reachable",
     ])
-    .await?)
+    .await
 }
